@@ -1,0 +1,70 @@
+# Конфигурация последовательностей действий
+# Каждая последовательность - это список шагов
+
+sequences:
+  # Пример 1: Открыть Atlas и создать новую вкладку
+  atlas_new_tab:
+    name: "Открыть Atlas и новая вкладка"
+    steps:
+      - action: click
+        template: models/atlas_icon.png
+        clicks: 2
+        interval: 0.3
+        description: "Двойной клик на иконку Atlas"
+        
+      - action: wait
+        duration: 1.0
+        description: "Ждем открытия Atlas"
+        
+      - action: click
+        template: models/plus_button.png
+        clicks: 1
+        description: "Клик на кнопку новой вкладки"
+  
+  # Пример 2: Сложная последовательность
+  complex_workflow:
+    name: "Сложный рабочий процесс"
+    repeat: 3  # Повторить всю последовательность 3 раза
+    steps:
+      - action: click
+        template: models/button1.png
+        clicks: 1
+        
+      - action: wait
+        duration: 0.5
+        
+      - action: click
+        template: models/button2.png
+        clicks: 2
+        interval: 0.2
+        
+      - action: type
+        text: "Hello World"
+        description: "Ввод текста"
+        
+      - action: key
+        key: "enter"
+        description: "Нажать Enter"
+  
+  # Пример 3: Условная последовательность
+  conditional_clicks:
+    name: "Клики с проверкой"
+    steps:
+      - action: click
+        template: models/target.png
+        clicks: 5
+        interval: 0.5
+        wait_for_appear: true  # Ждать появления кнопки
+        timeout: 10  # Максимум 10 секунд ожидания
+        
+      - action: click
+        template: models/confirm.png
+        clicks: 1
+        optional: true  # Не останавливаться если не найдена
+
+# Глобальные настройки
+settings:
+  default_interval: 0.5  # Пауза между кликами по умолчанию
+  default_timeout: 5  # Таймаут ожидания по умолчанию
+  threshold: 0.86  # Порог совпадения шаблона
+  fail_on_not_found: false  # Продолжать если кнопка не найдена

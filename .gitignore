@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Модели и данные
+models/*.pt
+models/*.onnx
+data/images/
+runs/
+
+# Шаблоны (раскомментируй если не хочешь коммитить)
+# models/button.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp

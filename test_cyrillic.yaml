@@ -1,0 +1,72 @@
+# Тест ввода кириллицы
+
+sequences:
+  test_russian_input:
+    name: "Тест ввода русского текста"
+    steps:
+      # Открыть Spotlight
+      - action: hotkey
+        keys: ["command", "space"]
+        description: "Открыть Spotlight"
+        
+      - action: wait
+        duration: 0.5
+        
+      # Ввести "TextEdit"
+      - action: type
+        text: "TextEdit"
+        description: "Поиск TextEdit"
+        
+      - action: key
+        key: "enter"
+        
+      - action: wait
+        duration: 2.0
+        description: "Ждем открытия TextEdit"
+        
+      # Ввести русский текст
+      - action: type
+        text: "расскажи историю про мужественного викинга"
+        description: "Ввод русского текста"
+        
+      - action: key
+        key: "enter"
+        
+      - action: type
+        text: "Привет мир! 🔥"
+        description: "Текст с эмодзи"
+  
+  test_mixed_input:
+    name: "Тест смешанного текста"
+    steps:
+      - action: type
+        text: "Hello мир! 123"
+        description: "Латиница + кириллица + цифры"
+  
+  test_methods:
+    name: "Тест разных методов ввода"
+    steps:
+      # Метод 1: Автоматический
+      - action: type
+        text: "Автоматический метод"
+        method: auto
+        
+      - action: key
+        key: "enter"
+        
+      # Метод 2: Буфер обмена
+      - action: type
+        text: "Через буфер обмена"
+        method: clipboard
+        
+      - action: key
+        key: "enter"
+        
+      # Метод 3: Клавиатура (только латиница)
+      - action: type
+        text: "keyboard method"
+        method: keyboard
+
+settings:
+  default_interval: 0.5
+  threshold: 0.86
