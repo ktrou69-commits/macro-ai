@@ -1,8 +1,0 @@
-# TikTok координаты
-# Определены: 2025-11-04 19:34:28
-
-reply_button_x = 971
-reply_button_y = 619
-
-input_field_x = 1303
-input_field_y = 273
