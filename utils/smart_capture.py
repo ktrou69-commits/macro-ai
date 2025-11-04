@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-smart_capture.py
+template_capture.py (ранее smart_capture.py)
 Умный захват шаблонов с поддержкой:
 - Задержки перед захватом (для переключения рабочих столов)
 - Выбора конкретного экрана
 - Сохранения под своим именем
 - Превью перед сохранением
+
+Новая архитектура v2.0 - сохранение в templates/
 """
 
 import cv2
@@ -13,7 +15,10 @@ import numpy as np
 import pyautogui
 import time
 import os
+import sys
 from pathlib import Path
+
+# Автономный скрипт - работает без зависимостей
 
 class SmartCapture:
     def __init__(self):
@@ -281,12 +286,16 @@ def main():
         if not filename.endswith('.png'):
             filename += '.png'
         
+        # Создаем папку templates если не существует
+        templates_dir = Path("templates")
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        
         # Полный путь
-        output_path = f"models/{filename}"
+        output_path = str(templates_dir / filename)
         
         # Проверяем существование
         if os.path.exists(output_path):
-            overwrite = input(f"⚠️  Файл {output_path} существует. Перезаписать? (y/n): ").strip().lower()
+            overwrite = input(f"⚠️  Файл {filename} существует. Перезаписать? (y/n): ").strip().lower()
             if overwrite != 'y':
                 continue
         
@@ -296,6 +305,8 @@ def main():
     if capture.save_template(output_path):
         print("\n" + "="*60)
         print("🎉 Готово!")
+        print("="*60)
+        print(f"📁 Сохранено: templates/{filename}")
         print("="*60)
         print(f"\n💡 Используй в конфиге:")
         print(f"   template: {output_path}")

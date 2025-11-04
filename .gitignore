@@ -4,21 +4,28 @@ __pycache__/
 *$py.class
 *.so
 .Python
-venv/
-env/
-ENV/
-*.egg-info/
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Модели и данные
-models/*.pt
-models/*.onnx
-data/images/
-runs/
-
-# Шаблоны (раскомментируй если не хочешь коммитить)
-# models/button.png
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
 
 # IDE
 .vscode/
@@ -26,16 +33,53 @@ runs/
 *.swp
 *.swo
 *~
+.cursor/
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+._*
 
-# Логи
+# YOLO
+runs/
+*.pt
+!data/models/yolov8n.pt
+
+# Data
+data/images/
+data/cache/
+*.jpg
+*.jpeg
+*.png
+!templates/**/*.png
+!docs/**/*.png
+
+# Logs
 *.log
 logs/
 
-# Временные файлы
-*.tmp
-*.temp
+# Temp
+temp/
+tmp/
+.tmp/
+
+# Configs (keep examples)
+configs/sequences/*.yaml
+!configs/sequences/example_*.yaml
+
+# Coordinates
+data/coordinates/*.txt
+
+# Old structure (deprecated)
+models/
+examples/example_*.py
+
+# Archive (experimental, not supported)
+archive/
+
+# Development files
+.dev/
+
+# Tests
+tests/

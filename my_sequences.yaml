@@ -1,101 +1,99 @@
 sequences:
-  atlasopener:
+  checkbutton:
     name: '-'
     steps:
     - action: click
-      template: models/button.png
-      clicks: 2
-      interval: 0.3
-      wait_for_appear: true
-      timeout: 1.5
-      description: atlas button
-    - action: click
-      template: models/plus_button.png
+      template: templates/acceptAll_button.png
       clicks: 1
-      description: plus button
-    - action: click
-      template: models/gptsearch_button.png
-      clicks: 1
-      description: search button
-    - action: type
-      text: Tik Tok
-      description: text copy
-    - action: click
-      template: models/entergpt_button.png
-      clicks: 1
-      wait_for_appear: true
-      timeout: 1.5
-      description: enter button
-    - action: click
-      template: models/tiktok_site.png
-      clicks: 1
-      wait_for_appear: true
-      timeout: 4.0
-      description: tik tok browser button
-    - action: wait
-      duration: 2.0
-      description: Ожидание загрузки TikTok
-    - action: scroll
-      direction: down
-      amount: 5
-      clicks: 1
-      description: down scroll tik tok
-  '1':
-    name: '-'
+      description: '-'
+  '12':
+    name: '12'
     steps:
-    - action: wait
-      duration: 1.4
-      description: Пауза
-    - action: click
-      position: absolute
-      x: 150.2265625
-      y: 806.10546875
-      clicks: 1
-      description: Клик в (150.2265625, 806.10546875)
-    - action: wait
-      duration: 0.7
-      description: Пауза
-    - action: click
-      position: absolute
-      x: 148.66015625
-      y: 806.3671875
-      clicks: 1
-      description: Клик в (148.66015625, 806.3671875)
     - action: wait
       duration: 1.8
       description: Пауза
     - action: click
       position: absolute
-      x: 152.171875
-      y: 918.42578125
+      x: 170.8203125
+      y: 909.78125
       clicks: 1
-      description: Клик в (152.171875, 918.42578125)
+      description: Клик в (170.8203125, 909.78125)
+    - action: click
+      position: absolute
+      x: 170.8203125
+      y: 909.78125
+      clicks: 1
+      description: Клик в (170.8203125, 909.78125)
     - action: wait
-      duration: 2.0
+      duration: 2.3
       description: Пауза
     - action: click
       position: absolute
-      x: 758.26171875
-      y: 594.91015625
+      x: 1341.30078125
+      y: 68.01953125
       clicks: 1
-      description: Клик в (758.26171875, 594.91015625)
+      description: Клик в (1341.30078125, 68.01953125)
+    - action: wait
+      duration: 2.2
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 865.25390625
+      y: 443.21875
+      clicks: 1
+      description: Клик в (865.25390625, 443.21875)
+    - action: wait
+      duration: 2.8
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 1163.66796875
+      y: 68.03125
+      clicks: 1
+      description: Клик в (1163.66796875, 68.03125)
+    - action: wait
+      duration: 0.8
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 977.52734375
+      y: 71.39453125
+      clicks: 1
+      description: Клик в (977.52734375, 71.39453125)
+    - action: wait
+      duration: 0.8
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 834.59375
+      y: 57.28125
+      clicks: 1
+      description: Клик в (834.59375, 57.28125)
+    - action: wait
+      duration: 0.7
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 612.0625
+      y: 69.19140625
+      clicks: 1
+      description: Клик в (612.0625, 69.19140625)
+    - action: wait
+      duration: 0.6
+      description: Пауза
+    - action: click
+      position: absolute
+      x: 481.98828125
+      y: 72.85546875
+      clicks: 1
+      description: Клик в (481.98828125, 72.85546875)
     - action: wait
       duration: 0.9
       description: Пауза
     - action: click
       position: absolute
-      x: 758.140625
-      y: 594.91015625
+      x: 372.01171875
+      y: 67.19921875
       clicks: 1
-      description: Клик в (758.140625, 594.91015625)
-    - action: scroll
-      direction: down
-      amount: 15
-      clicks: 1
-      description: Скролл down
-    - action: scroll
-      direction: down
-      amount: 15
-      clicks: 5
-      pause: 1.0
+      description: Клик в (372.01171875, 67.19921875)
 settings: {}

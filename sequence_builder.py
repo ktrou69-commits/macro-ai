@@ -3,6 +3,8 @@
 sequence_builder.py
 Интерактивный конструктор последовательностей макросов
 Создавай последовательности прямо в консоли!
+
+Новая архитектура v2.0 - обновленные пути
 """
 
 import os
@@ -13,6 +15,8 @@ from pathlib import Path
 from typing import List, Dict, Any
 from pynput import mouse, keyboard
 from pynput.keyboard import Key
+
+# Автономный скрипт - работает без зависимостей
 
 class SequenceBuilder:
     """Интерактивный конструктор последовательностей"""
@@ -57,16 +61,21 @@ class SequenceBuilder:
             print(f"\n❌ Ошибка сохранения: {e}")
             return False
     
-    def list_templates(self):
+    def _show_templates(self):
         """Показать доступные шаблоны"""
-        models_dir = Path("models")
-        if not models_dir.exists():
-            print("⚠️  Папка models/ не найдена")
+        # Ищем шаблоны в папке templates
+        templates_dir = Path("templates")
+        
+        if not templates_dir.exists():
+            print("⚠️  Папка templates/ не найдена")
+            print("💡 Сначала захвати шаблоны: python3 utils/smart_capture.py")
             return []
         
-        templates = list(models_dir.glob("*.png"))
+        templates = list(templates_dir.glob("*.png"))
+        
         if not templates:
-            print("⚠️  Нет шаблонов в models/")
+            print("⚠️  Нет шаблонов в templates/")
+            print("💡 Сначала захвати шаблоны: python3 utils/smart_capture.py")
             return []
         
         print("\n📁 Доступные шаблоны:")
@@ -74,6 +83,10 @@ class SequenceBuilder:
             print(f"   {i}. {template.name}")
         
         return templates
+    
+    def list_templates(self):
+        """Показать доступные шаблоны (публичный метод)"""
+        return self._show_templates()
     
     def list_sequences(self):
         """Показать существующие последовательности"""
@@ -106,14 +119,21 @@ class SequenceBuilder:
             if choice.isdigit():
                 idx = int(choice) - 1
                 if 0 <= idx < len(templates):
-                    template_path = f"models/{templates[idx].name}"
+                    # Используем относительный путь
+                    template_path = f"templates/{templates[idx].name}"
                     break
             elif choice:
-                template_path = choice
-                if not choice.startswith("models/"):
-                    template_path = f"models/{choice}"
-                if os.path.exists(template_path):
+                # Если указан путь
+                if Path(choice).exists():
+                    template_path = choice
                     break
+                # Пробуем найти в templates/
+                full_path = Path("templates") / choice
+                if full_path.exists():
+                    template_path = f"templates/{choice}"
+                    break
+                print(f"⚠️  Файл не найден: {choice}")
+                continue
             
             print("⚠️  Неверный выбор")
         
