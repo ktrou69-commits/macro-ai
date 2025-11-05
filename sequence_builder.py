@@ -405,6 +405,100 @@ class SequenceBuilder:
         print(f"\n✅ Шаг добавлен: скролл {direction_text} x{clicks}")
         return True
     
+    def add_repeat_step(self):
+        """Добавить шаг повторения вложенных действий"""
+        print("\n" + "="*60)
+        print("➕ Добавление шага: ПОВТОРЕНИЕ")
+        print("="*60)
+        print("💡 Создай мини-последовательность которая будет повторяться")
+        print()
+        
+        # Количество повторов
+        while True:
+            times_input = input("🔄 Количество повторов (Enter=5): ").strip()
+            if times_input == "":
+                times = 5
+                break
+            try:
+                times = int(times_input)
+                if times > 0:
+                    break
+            except ValueError:
+                pass
+            print("⚠️  Введи число > 0")
+        
+        print(f"\n📝 Теперь добавь шаги которые будут повторяться {times} раз")
+        print("💡 Например: клик → скролл → пауза")
+        print()
+        
+        nested_steps = []
+        
+        while True:
+            print("\n" + "-"*60)
+            print(f"Шагов в повторении: {len(nested_steps)}")
+            print("-"*60)
+            print("1. 🖱️  Клик")
+            print("2. ⏸️  Пауза")
+            print("3. ⌨️  Текст")
+            print("4. 🔘 Клавиша")
+            print("5. 🎹 Hotkey")
+            print("6. 🖱️  Скролл")
+            print("0. ✅ Завершить и добавить")
+            print("q. ❌ Отмена")
+            print("-"*60)
+            
+            choice = input("Выбор: ").strip().lower()
+            
+            if choice == '0':
+                if not nested_steps:
+                    print("⚠️  Добавь хотя бы один шаг")
+                    continue
+                break
+            elif choice == 'q':
+                print("❌ Отменено")
+                return False
+            
+            # Временно сохраняем текущую последовательность
+            temp_sequence = self.current_sequence
+            self.current_sequence = nested_steps
+            
+            if choice == '1':
+                self.add_click_step()
+            elif choice == '2':
+                self.add_wait_step()
+            elif choice == '3':
+                self.add_type_step()
+            elif choice == '4':
+                self.add_key_step()
+            elif choice == '5':
+                self.add_hotkey_step()
+            elif choice == '6':
+                self.add_scroll_step()
+            else:
+                print("⚠️  Неверный выбор")
+            
+            # Восстанавливаем
+            nested_steps = self.current_sequence
+            self.current_sequence = temp_sequence
+        
+        # Описание
+        description = input("\n📝 Описание повторения (Enter=пропустить): ").strip()
+        
+        # Создаем шаг repeat
+        step = {
+            'action': 'repeat',
+            'times': times,
+            'steps': nested_steps
+        }
+        
+        if description:
+            step['description'] = description
+        
+        self.current_sequence.append(step)
+        
+        print(f"\n✅ Шаг добавлен: повторение x{times} ({len(nested_steps)} шагов)")
+        return True
+    
     def record_actions_step(self):
         """Записать действия как один или несколько шагов"""
         print("\n" + "="*60)
@@ -651,12 +745,26 @@ class SequenceBuilder:
                 clicks = step.get('clicks', 1)
                 direction_text = "⬇️ вниз" if direction == 'down' else "⬆️ вверх"
                 info = f"{direction_text} (amount: {amount}, x{clicks})"
+            elif action == 'REPEAT':
+                times = step.get('times', 1)
+                nested_steps = step.get('steps', [])
+                info = f"x{times} ({len(nested_steps)} шагов)"
             else:
                 info = ""
             
             print(f"   {i}. {action}: {info}")
             if desc:
                 print(f"      └─ {desc}")
+            
+            # Показываем вложенные шаги для REPEAT
+            if action == 'REPEAT':
+                nested_steps = step.get('steps', [])
+                for j, nested_step in enumerate(nested_steps, 1):
+                    nested_action = nested_step['action'].upper()
+                    nested_desc = nested_step.get('description', '')
+                    print(f"      {j}. {nested_action}")
+                    if nested_desc:
+                        print(f"         └─ {nested_desc}")
     
     def save_sequence(self):
         """Сохранить последовательность"""
@@ -965,6 +1073,7 @@ class SequenceBuilder:
             print("5. 🎹 Комбинация клавиш")
             print("6. 🖱️  Скролл")
             print("7. 🎬 Записать действия (координаты)")
+            print("r. 🔄 Повторить шаги (repeat)")
             print()
             print("e. ✏️  Редактировать шаг")
             print("8. 🗑️  Удалить шаг")
@@ -989,6 +1098,8 @@ class SequenceBuilder:
                 self.add_scroll_step()
             elif choice == '7':
                 self.record_actions_step()
+            elif choice == 'r':
+                self.add_repeat_step()
             elif choice == 'e':
                 self.edit_step()
             elif choice == '8':

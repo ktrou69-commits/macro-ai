@@ -8,7 +8,7 @@ variables:
   typing_speed: 0.05
 
 sequences:
-  # Пример 1: Полные метаданные
+  # Пример 1: Полные метаданные с REPEAT
   tiktok_auto_like:
     name: Автоматические лайки TikTok
     description: Лайкает посты и скроллит ленту
@@ -18,21 +18,24 @@ sequences:
     # GOAL: Увеличение активности
     # FREQUENCY: 2-3 раза в день
     steps:
-    - action: click
-      template: templates/tiktok_like_button.png
-      clicks: 1
-      description: Лайк видео
-    - action: wait
-      duration: ${pause_duration}  # Использование переменной
-      description: Пауза между действиями
-    - action: scroll
-      direction: down
-      amount: ${scroll_amount}  # Использование переменной
-      clicks: 1
-      # NOTE: Скролл выполняется в центре экрана автоматически
-      # Можно указать x, y для скролла в конкретной позиции
-      description: Следующее видео
-    repeat: 50
+    - action: repeat
+      times: 50
+      description: Повторить лайк + скролл 50 раз
+      steps:
+      - action: click
+        template: templates/tiktok_like_button.png
+        clicks: 1
+        description: Лайк видео
+      - action: wait
+        duration: ${pause_duration}  # Использование переменной
+        description: Пауза между действиями
+      - action: scroll
+        direction: down
+        amount: ${scroll_amount}  # Использование переменной
+        clicks: 1
+        # NOTE: Скролл выполняется в центре экрана автоматически
+        # Можно указать x, y для скролла в конкретной позиции
+        description: Следующее видео
 
   # Пример 2: ChatGPT автоматизация
   chatgpt_auto_send:

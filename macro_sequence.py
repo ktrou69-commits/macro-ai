@@ -168,8 +168,38 @@ class MacroRunner:
         """Выполнение одного шага"""
         action = step.get('action')
         
+        # REPEAT - повторение вложенных шагов
+        if action == 'repeat':
+            times = step.get('times', 1)
+            nested_steps = step.get('steps', [])
+            
+            if not nested_steps:
+                print("⚠️  Нет шагов для повторения")
+                return True
+            
+            print(f"🔄 Повторение {times} раз ({len(nested_steps)} шагов)")
+            
+            for iteration in range(times):
+                print(f"\n   ━━━ Итерация {iteration + 1}/{times} ━━━")
+                
+                for i, nested_step in enumerate(nested_steps, 1):
+                    nested_action = nested_step.get('action')
+                    nested_desc = nested_step.get('description', nested_action)
+                    print(f"   📍 {i}. {nested_desc}")
+                    
+                    if not self._execute_step(nested_step):
+                        print(f"   ❌ Шаг {i} не выполнен")
+                        return False
+                
+                # Пауза между итерациями (кроме последней)
+                if iteration < times - 1:
+                    time.sleep(0.5)
+            
+            print(f"\n✅ Повторение завершено ({times} итераций)")
+            return True
+        
         # CLICK
-        if action == 'click':
+        elif action == 'click':
             clicks = step.get('clicks', 1)
             interval = step.get('interval', DEFAULT_INTERVAL)
             

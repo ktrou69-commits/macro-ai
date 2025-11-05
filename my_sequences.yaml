@@ -1,11 +1,64 @@
 sequences:
-  checkbutton:
-    name: '-'
+  tiktokopener2:
+    name: atlas - tiktok opener
     steps:
     - action: click
-      template: templates/acceptAll_button.png
+      template: templates/button.png
+      clicks: 2
+      interval: 0.3
+      wait_for_appear: true
+      timeout: 1.5
+      description: Нажатие на кнопку атлас на рабочем столе
+    - action: click
+      template: templates/plus_button.png
       clicks: 1
-      description: '-'
+      description: Нажатие на плюс для создания новой вкладки браузера Атлас
+    - action: click
+      template: templates/gptsearch_button.png
+      clicks: 1
+      description: Нажатие на ввод запроса браузеру Атлас
+    - action: type
+      text: Tik Tok
+      description: Ввод надписи в поле ввода для перехода на браузер поиск
+    - action: click
+      template: templates/entergpt_button.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 2.0
+      description: Отправка введенного текста
+    - action: click
+      template: templates/tiktok_openSite-btn.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 4.0
+      description: Переход на сайт TikTok в браузере Атлас
+    - action: wait
+      duration: 2.0
+      description: Пауза на прогрузку TikTok
+    - action: repeat
+      times: 5
+      steps:
+      - action: click
+        template: templates/atlas-tiktok_like_btn.png
+        clicks: 1
+        description: Лайк текущего видео
+      - action: scroll
+        direction: down
+        amount: 15
+        clicks: 1
+        description: Скролл к следующему видео
+    - action: click
+      template: templates/atlas-TikTok_search_btn.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 3.0
+      description: Нажатие на строку поиска TikTok
+    - action: type
+      text: Иван Золо
+      description: Ввод текста в поле поиска
+    - action: key
+      key: enter
+      description: Нажатие кнопки Enter для поиска
   '12':
     name: '12'
     steps:
@@ -141,6 +194,25 @@ sequences:
       amount: 15
       clicks: 1
       description: scroll down tiktok atlas browser
+    - action: click
+      template: templates/atlas-TikTok_logo_btn.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 4.0
+      description: Обновление страницы тик ток нажатием на логотип
+    - action: click
+      template: templates/atlas-TikTok_search_btn.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 3.0
+      description: Нажатие на строку ввода тик ток для поиска
+    - action: type
+      text: Некоглай
+      description: Ввод текста в поле ввода
+    - action: key
+      key: enter
+      description: Нажатие кнопки Enter для поиска после ввода в тик ток браузере
+        атлас
     description: atlas - tiktok opener
     platform: tiktok
     tags:
