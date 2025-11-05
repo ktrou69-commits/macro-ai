@@ -84,6 +84,20 @@ python3 utils/smart_capture.py
   index: 1  # Вторая
 ```
 
+### Похожие кнопки (находит не ту):
+```yaml
+# Решение 1: Специфичный шаблон (только уникальная часть)
+# Решение 2: Index
+- action: click
+  template: templates/button.png
+  index: 1  # Попробуй 0, 1, 2
+# Решение 3: Координаты
+- action: click
+  position: absolute
+  x: 1245
+  y: 275
+```
+
 ### OCR не читает:
 ```yaml
 # Увеличь область

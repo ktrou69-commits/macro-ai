@@ -80,12 +80,23 @@ sequences:
     - action: wait
       duration: 2.0
     
-    # 2. Кликнуть "Ответить"
+    # 2. Кликнуть "Ответить" (два клика для надежности)
+    # Первый клик: Может кликнуть по "20 Antworten anzeigen" (она исчезнет)
     - action: click
       template: templates/tiktok_reply_btn.png
       wait_for_appear: true
       timeout: 3.0
-      description: Кнопка ответить
+      description: Первый клик (раскрыть ответы если нужно)
+    
+    - action: wait
+      duration: 0.5
+    
+    # Второй клик: Теперь точно кликнет по нужной "Antworten"
+    - action: click
+      template: templates/tiktok_reply_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Второй клик (кнопка ответить)
     
     - action: wait
       duration: 1.0

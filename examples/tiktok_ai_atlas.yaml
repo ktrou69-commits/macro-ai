@@ -89,12 +89,23 @@ sequences:
         save_to: reply_text
         description: Сгенерировать ответ через Gemini
       
-      # 4.3. Кликнуть "Ответить" (Template)
+      # 4.3. Кликнуть "Ответить" (два клика для надежности)
+      # Первый клик: Раскрыть ответы если нужно
       - action: click
         template: templates/tiktok_reply_btn.png
         wait_for_appear: true
         timeout: 3.0
-        description: Открыть поле ответа
+        description: Первый клик (раскрыть ответы)
+      
+      - action: wait
+        duration: 0.5
+      
+      # Второй клик: Кликнуть по нужной "Antworten"
+      - action: click
+        template: templates/tiktok_reply_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Второй клик (открыть поле ответа)
       
       # 4.4. Кликнуть поле ввода (Template)
       - action: click
