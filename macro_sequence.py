@@ -274,15 +274,27 @@ class MacroRunner:
             # Перемещаем курсор в нужную позицию
             pyautogui.moveTo(x, y, duration=0.2)
             
+            # На macOS логика инвертирована:
+            # положительное значение = скролл вверх
+            # отрицательное значение = скролл вниз
+            # На Windows/Linux - наоборот
+            import platform
+            is_macos = platform.system() == 'Darwin'
+            
+            # Инвертируем для macOS
+            if is_macos:
+                scroll_amount = -amount if direction == 'down' else amount
+            else:
+                scroll_amount = amount if direction == 'down' else -amount
+            
             # Выполняем скролл нужное количество раз
-            scroll_amount = amount if direction == 'down' else -amount
             for i in range(clicks):
                 pyautogui.scroll(scroll_amount)
                 if clicks > 1 and i < clicks - 1:
                     time.sleep(0.3)
             
             emoji = "⬇️" if direction == 'down' else "⬆️"
-            print(f"🖱️  Скролл {emoji} {direction}: {amount} x{clicks}")
+            print(f"🖱️  Скролл {emoji} {direction}: {abs(scroll_amount)} x{clicks}")
             return True
         
         else:
