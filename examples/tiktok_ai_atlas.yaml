@@ -96,15 +96,29 @@ sequences:
         timeout: 3.0
         description: Открыть поле ответа
       
-      # 4.4. Ввести ответ (pyautogui)
+      # 4.4. Кликнуть поле ввода (Template)
+      - action: click
+        template: templates/tiktok_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Активировать поле ввода
+      
+      # 4.5. Ввести ответ (pyautogui)
       - action: type
         text: "{reply_text}"
         description: Ввести AI ответ
       
-      # 4.5. Отправить (Enter)
-      - action: key
-        key: enter
-        description: Отправить ответ
+      # 4.6. Отправить (Template или Enter)
+      - action: click
+        template: templates/tiktok_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Кнопка отправить
+      
+      # Альтернатива: Enter вместо клика
+      # - action: key
+      #   key: enter
+      #   description: Отправить ответ
       
       # 4.6. Пауза
       - action: wait
