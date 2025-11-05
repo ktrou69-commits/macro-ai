@@ -171,6 +171,7 @@ class MacroRunner:
         # CLICK
         if action == 'click':
             clicks = step.get('clicks', 1)
+            interval = step.get('interval', DEFAULT_INTERVAL)
             
             # Проверяем тип клика: по шаблону или по координатам
             if step.get('position') == 'absolute':
@@ -178,7 +179,7 @@ class MacroRunner:
                 x = int(step.get('x', 0))
                 y = int(step.get('y', 0))
                 print(f"🎯 Клик по координатам: ({x}, {y})")
-                return self._perform_click(x, y, clicks)
+                return self._perform_click(x, y, clicks, interval)
             
             # Клик по шаблону (template matching)
             template = step.get('template')
@@ -186,14 +187,33 @@ class MacroRunner:
                 print("❌ Не указан шаблон или координаты для клика")
                 return False
             
-            found, coords, score = self._find_template(template)
-            if not found:
-                print(f"❌ Шаблон не найден: {template} (score: {score:.3f})")
-                return False
+            # Поддержка wait_for_appear и timeout
+            wait_for_appear = step.get('wait_for_appear', False)
+            timeout = step.get('timeout', 5.0)
+            
+            if wait_for_appear:
+                print(f"⏳ Ожидание появления шаблона (timeout: {timeout}с)...")
+                start_time = time.time()
+                found = False
+                
+                while time.time() - start_time < timeout:
+                    found, coords, score = self._find_template(template)
+                    if found:
+                        break
+                    time.sleep(0.5)
+                
+                if not found:
+                    print(f"❌ Шаблон не появился за {timeout}с")
+                    return False
+            else:
+                found, coords, score = self._find_template(template)
+                if not found:
+                    print(f"❌ Шаблон не найден: {template} (score: {score:.3f})")
+                    return False
             
             x, y = coords
             print(f"✅ Найдено! ({x}, {y}) score: {score:.3f}")
-            return self._perform_click(x, y, clicks)
+            return self._perform_click(x, y, clicks, interval)
         
         # WAIT
         elif action == 'wait':
