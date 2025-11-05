@@ -59,10 +59,10 @@ sequences:
     
     # 3. Открыть комментарии
     - action: click
-      template: templates/atlas-TikTok_search_btn.png
+      template: templates/tiktok_comments_btn.png
       wait_for_appear: true
       timeout: 3.0
-      description: Открыть комментарии или поиск
+      description: Открыть комментарии
     
     - action: wait
       duration: 2.0
@@ -91,7 +91,7 @@ sequences:
       
       # 4.3. Кликнуть "Ответить" (Template)
       - action: click
-        template: templates/atlas-tiktok_reply_btn.png
+        template: templates/tiktok_reply_btn.png
         wait_for_appear: true
         timeout: 3.0
         description: Открыть поле ответа

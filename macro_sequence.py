@@ -203,6 +203,20 @@ class MacroRunner:
         # REPEAT - повторение вложенных шагов
         if action == 'repeat':
             times = step.get('times', 1)
+            
+            # Обработка переменных в times
+            if isinstance(times, str):
+                # Если это строка с переменной типа "{reply_count}"
+                if times.startswith('{') and times.endswith('}'):
+                    var_name = times[1:-1]
+                    times = self.variables.get(var_name, 1)
+                # Или просто строка с числом
+                try:
+                    times = int(times)
+                except (ValueError, TypeError):
+                    print(f"⚠️  Неверное значение times: {times}, используем 1")
+                    times = 1
+            
             nested_steps = step.get('steps', [])
             
             if not nested_steps:
