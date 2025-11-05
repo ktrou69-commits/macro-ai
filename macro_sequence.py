@@ -684,7 +684,7 @@ class MacroRunner:
             return False
     
     def _ocr_extract(self, step: dict) -> Optional[str]:
-        """Извлечение текста через OCR"""
+        """Извлечение текста через OCR с предобработкой"""
         if not OCR_AVAILABLE:
             print("❌ EasyOCR недоступен")
             return None
@@ -695,6 +695,7 @@ class MacroRunner:
             self.ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
         
         region = step.get('region')
+        preprocess = step.get('preprocess', True)  # Предобработка по умолчанию
         
         try:
             # Скриншот региона
@@ -705,18 +706,50 @@ class MacroRunner:
                 # Автопоиск текстового блока (упрощенно - весь экран)
                 screenshot = pyautogui.screenshot()
             
-            # OCR
+            # Конвертация в numpy array
             img_array = np.array(screenshot)
+            
+            # Предобработка для лучшего распознавания
+            if preprocess:
+                # Конвертация в grayscale
+                if len(img_array.shape) == 3:
+                    img_gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                else:
+                    img_gray = img_array
+                
+                # Увеличение контраста (CLAHE)
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                img_enhanced = clahe.apply(img_gray)
+                
+                # Бинаризация (Otsu)
+                _, img_binary = cv2.threshold(img_enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                
+                # Используем обработанное изображение
+                img_array = img_binary
+            
+            # OCR
             results = self.ocr_reader.readtext(img_array)
             
-            # Объединяем весь текст
-            text = ' '.join([result[1] for result in results])
+            # Объединяем весь текст (сортируем по Y-координате для правильного порядка)
+            if results:
+                # Сортировка по вертикали (Y), затем по горизонтали (X)
+                sorted_results = sorted(results, key=lambda r: (r[0][0][1], r[0][0][0]))
+                text = ' '.join([result[1] for result in sorted_results])
+            else:
+                text = ""
             
-            print(f"✅ OCR: извлечено {len(text)} символов")
+            if text:
+                print(f"✅ OCR: извлечено {len(text)} символов")
+                print(f"📝 Текст: {text[:100]}...")
+            else:
+                print("⚠️  OCR: текст не найден")
+            
             return text
             
         except Exception as e:
             print(f"❌ Ошибка OCR: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def _ai_generate(self, step: dict) -> bool:
