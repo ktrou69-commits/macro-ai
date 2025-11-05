@@ -108,13 +108,15 @@ sequences:
         text: "{reply_text}"
         description: Ввести AI ответ
       
-      # 4.6. Отправить (Template - первая найденная = активная)
+      # 4.6. Отправить (автовыбор по длине текста)
       - action: click
-        template: templates/tiktok_send_btn.png
+        templates:  # Список шаблонов (попробует по порядку)
+          - templates/tiktok_send_btn_long.png   # Для длинного текста
+          - templates/tiktok_send_btn.png        # Для короткого текста (fallback)
         wait_for_appear: true
         timeout: 3.0
-        index: 0  # Первое совпадение (активная кнопка, ближе к "Ответить")
-        description: Кнопка отправить (активная)
+        index: 0  # Первое совпадение (активная кнопка)
+        description: Кнопка отправить (авто)
       
       # Альтернатива: Enter вместо клика
       # - action: key

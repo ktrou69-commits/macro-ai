@@ -331,7 +331,14 @@ class MacroRunner:
             
             # Клик по шаблону (template matching)
             template = step.get('template')
-            if not template:
+            templates = step.get('templates')  # Список шаблонов (fallback)
+            
+            # Если указан список шаблонов, попробуем каждый
+            if templates:
+                template_list = templates if isinstance(templates, list) else [templates]
+            elif template:
+                template_list = [template]
+            else:
                 print("❌ Не указан шаблон или координаты для клика")
                 return False
             
@@ -342,25 +349,38 @@ class MacroRunner:
             wait_for_appear = step.get('wait_for_appear', False)
             timeout = step.get('timeout', 5.0)
             
-            if wait_for_appear:
-                print(f"⏳ Ожидание появления шаблона (timeout: {timeout}с)...")
-                start_time = time.time()
-                found = False
-                
-                while time.time() - start_time < timeout:
-                    found, coords, score = self._find_template(template, index=index)
+            found = False
+            coords = None
+            score = 0.0
+            used_template = None
+            
+            # Попробовать каждый шаблон из списка
+            for tmpl in template_list:
+                if wait_for_appear:
+                    print(f"⏳ Ожидание появления шаблона (timeout: {timeout}с)...")
+                    start_time = time.time()
+                    
+                    while time.time() - start_time < timeout:
+                        found, coords, score = self._find_template(tmpl, index=index)
+                        if found:
+                            used_template = tmpl
+                            break
+                        time.sleep(0.5)
+                    
                     if found:
                         break
-                    time.sleep(0.5)
-                
-                if not found:
-                    print(f"❌ Шаблон не появился за {timeout}с")
-                    return False
-            else:
-                found, coords, score = self._find_template(template, index=index)
-                if not found:
-                    print(f"❌ Шаблон не найден: {template} (score: {score:.3f})")
-                    return False
+                else:
+                    found, coords, score = self._find_template(tmpl, index=index)
+                    if found:
+                        used_template = tmpl
+                        break
+            
+            if not found:
+                if len(template_list) > 1:
+                    print(f"❌ Ни один из {len(template_list)} шаблонов не найден")
+                else:
+                    print(f"❌ Шаблон не найден: {template_list[0]} (score: {score:.3f})")
+                return False
             
             x, y = coords
             print(f"✅ Найдено! ({x}, {y}) score: {score:.3f}")

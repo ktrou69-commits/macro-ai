@@ -108,13 +108,15 @@ sequences:
     - action: wait
       duration: 1.0
     
-    # 5. Кликнуть "Отправить" (первая найденная = ближайшая к "Ответить")
+    # 5. Кликнуть "Отправить" (автовыбор по длине текста)
     - action: click
-      template: templates/tiktok_send_btn.png
+      templates:  # Список шаблонов (попробует по порядку)
+        - templates/tiktok_send_btn_long.png   # Для длинного текста
+        - templates/tiktok_send_btn.png        # Для короткого текста (fallback)
       wait_for_appear: true
       timeout: 3.0
-      index: 0  # Первое совпадение (обычно верхнее/ближайшее)
-      description: Кнопка отправить (активная)
+      index: 0
+      description: Кнопка отправить (авто)
     
     - action: wait
       duration: 1.0
