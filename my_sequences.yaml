@@ -53,6 +53,9 @@ sequences:
       wait_for_appear: true
       timeout: 3.0
       description: Нажатие на строку поиска TikTok
+    - action: wait
+      duration: 2.0
+      description: Пауза на прогрузку тик ток
     - action: type
       text: Иван Золо
       description: Ввод текста в поле поиска

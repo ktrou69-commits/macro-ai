@@ -1,0 +1,268 @@
+# 🤖 TikTok AI Comments - Умные ответы на комментарии
+# Автоматическая генерация осмысленных ответов через Gemini API
+
+# Глобальные переменные
+variables:
+  tiktok_url: "https://www.tiktok.com/@username/video/123456789"
+  reply_count: 5
+  ai_model: gemini
+  reply_tone: дружелюбный
+
+sequences:
+  # ========== ПРИМЕР 1: Selenium + AI (рекомендуется) ==========
+  tiktok_ai_replies_selenium:
+    name: TikTok AI ответы (Selenium)
+    description: Автоматические осмысленные ответы через Selenium + Gemini
+    platform: tiktok
+    tags: [ai, selenium, comments, automation]
+    
+    steps:
+    # 1. Инициализация Selenium
+    - action: selenium_init
+      browser: chrome
+      headless: false
+      url: "{tiktok_url}"
+      description: Открыть TikTok через Selenium
+    
+    # 2. Подождать загрузку страницы
+    - action: wait
+      duration: 3.0
+      description: Загрузка видео и комментариев
+    
+    # 3. Повторить для нескольких комментариев
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать несколько комментариев
+      steps:
+      
+      # 3.1. Извлечь текст комментария (Selenium)
+      - action: ai_extract_text
+        method: selenium
+        selector: "[data-e2e='comment-level-1'] span[data-e2e='comment-text']"
+        fallback: ocr
+        region: [100, 300, 600, 100]
+        save_to: comment_text
+        description: Прочитать комментарий
+      
+      # 3.2. AI генерация ответа
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши {reply_tone} ответ на комментарий TikTok (максимум 50 символов): {comment_text}"
+        max_tokens: 50
+        temperature: 0.7
+        save_to: reply_text
+        description: Сгенерировать ответ через AI
+      
+      # 3.3. Кликнуть "Ответить" (Selenium)
+      - action: selenium_click
+        selector: "[data-e2e='comment-reply-button']"
+        description: Открыть поле ответа
+      
+      # 3.4. Ввести ответ (Selenium)
+      - action: selenium_type
+        selector: "[data-e2e='comment-input']"
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      # 3.5. Отправить (Selenium)
+      - action: selenium_click
+        selector: "[data-e2e='comment-post']"
+        description: Отправить ответ
+      
+      # 3.6. Пауза между комментариями
+      - action: wait
+        duration: 2.0
+        description: Пауза для естественности
+      
+      # 3.7. Скролл к следующему комментарию
+      - action: selenium_scroll
+        direction: down
+        amount: 200
+        description: Следующий комментарий
+    
+    # 4. Закрыть браузер
+    - action: selenium_close
+      description: Закрыть Selenium
+
+  # ========== ПРИМЕР 2: Гибридный (Template + AI) ==========
+  tiktok_ai_replies_hybrid:
+    name: TikTok AI ответы (Гибридный)
+    description: Template matching для кликов + OCR + AI для текста
+    platform: tiktok
+    tags: [ai, hybrid, comments]
+    
+    steps:
+    # 1. Открыть комментарии (Template matching)
+    - action: click
+      template: templates/tiktok_comments_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии
+    
+    # 2. Пауза
+    - action: wait
+      duration: 2.0
+    
+    # 3. Повторить для комментариев
+    - action: repeat
+      times: 3
+      steps:
+      
+      # 3.1. Извлечь текст (OCR)
+      - action: ai_extract_text
+        method: ocr
+        region: [100, 300, 600, 100]
+        save_to: comment_text
+        description: OCR комментария
+      
+      # 3.2. AI генерация
+      - action: ai_generate
+        model: gemini
+        prompt: "Ответь на: {comment_text}"
+        save_to: reply_text
+      
+      # 3.3. Кликнуть "Ответить" (Template)
+      - action: click
+        template: templates/tiktok_reply_btn.png
+      
+      # 3.4. Ввести ответ (pyautogui)
+      - action: type
+        text: "{reply_text}"
+      
+      # 3.5. Отправить (Enter)
+      - action: key
+        key: enter
+      
+      # 3.6. Скролл (pyautogui)
+      - action: scroll
+        direction: down
+        amount: 10
+
+  # ========== ПРИМЕР 3: Умный поиск комментария ==========
+  tiktok_ai_find_and_reply:
+    name: TikTok AI поиск и ответ
+    description: Найти конкретный комментарий и ответить
+    platform: tiktok
+    tags: [ai, search, selenium]
+    
+    steps:
+    # 1. Инициализация
+    - action: selenium_init
+      browser: chrome
+      url: "{tiktok_url}"
+    
+    - action: wait
+      duration: 3.0
+    
+    # 2. Найти комментарий с определенным текстом
+    - action: selenium_find
+      selector: "[data-e2e='comment-level-1']"
+      wait_for_element: true
+      timeout: 10.0
+      save_element: target_comment
+      description: Найти комментарий
+    
+    # 3. Извлечь текст найденного комментария
+    - action: ai_extract_text
+      method: selenium
+      selector: "[data-e2e='comment-text']"
+      save_to: comment_text
+    
+    # 4. AI генерация с контекстом
+    - action: ai_generate
+      model: gemini
+      prompt: |
+        Ты - дружелюбный блогер TikTok.
+        Пользователь написал: {comment_text}
+        Напиши короткий (до 50 символов) позитивный ответ с эмодзи.
+      max_tokens: 50
+      temperature: 0.8
+      save_to: reply_text
+    
+    # 5. Ответить
+    - action: selenium_click
+      element: target_comment
+      selector: "[data-e2e='reply-button']"
+    
+    - action: selenium_type
+      selector: "[data-e2e='comment-input']"
+      text: "{reply_text}"
+    
+    - action: selenium_click
+      selector: "[data-e2e='comment-post']"
+    
+    # 6. Закрыть
+    - action: selenium_close
+
+  # ========== ПРИМЕР 4: Массовая обработка ==========
+  tiktok_ai_mass_reply:
+    name: TikTok AI массовые ответы
+    description: Обработка всех комментариев на странице
+    platform: tiktok
+    tags: [ai, mass, automation]
+    
+    steps:
+    - action: selenium_init
+      browser: chrome
+      url: "{tiktok_url}"
+    
+    - action: wait
+      duration: 3.0
+    
+    # Скролл до конца комментариев
+    - action: repeat
+      times: 10
+      description: Прокрутить все комментарии
+      steps:
+      - action: selenium_scroll
+        direction: down
+        amount: 500
+      - action: wait
+        duration: 1.0
+    
+    # Обработать все комментарии
+    - action: repeat
+      times: 20
+      description: Ответить на 20 комментариев
+      steps:
+      
+      - action: ai_extract_text
+        method: selenium
+        selector: "[data-e2e='comment-text']"
+        save_to: comment_text
+      
+      - action: ai_generate
+        prompt: "Короткий дружелюбный ответ на: {comment_text}"
+        save_to: reply_text
+      
+      - action: selenium_click
+        selector: "[data-e2e='reply-button']"
+      
+      - action: selenium_type
+        selector: "[data-e2e='comment-input']"
+        text: "{reply_text}"
+      
+      - action: selenium_click
+        selector: "[data-e2e='comment-post']"
+      
+      - action: wait
+        duration: 3.0
+    
+    - action: selenium_close
+
+settings:
+  # Глобальные настройки
+  default_delay: 3
+  failsafe: true
+  
+  # AI настройки
+  ai:
+    model: gemini-pro
+    max_retries: 3
+    timeout: 30
+  
+  # Selenium настройки
+  selenium:
+    implicit_wait: 10
+    page_load_timeout: 30
+    window_size: [1920, 1080]

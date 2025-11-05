@@ -18,6 +18,33 @@ import pyautogui
 import cv2
 import pyperclip
 
+# AI & Selenium (опциональные импорты)
+try:
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.chrome.service import Service
+    from webdriver_manager.chrome import ChromeDriverManager
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    print("⚠️  Selenium не установлен. Установи: pip install selenium webdriver-manager")
+
+try:
+    import easyocr
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
+    print("⚠️  EasyOCR не установлен. Установи: pip install easyocr")
+
+try:
+    import google.generativeai as genai
+    AI_AVAILABLE = True
+except ImportError:
+    AI_AVAILABLE = False
+    print("⚠️  Gemini API не установлен. Установи: pip install google-generativeai")
+
 # Настройки
 DEFAULT_THRESHOLD = 0.86
 DEFAULT_INTERVAL = 0.5
@@ -43,6 +70,11 @@ class MacroRunner:
             'successful_finds': 0,
             'failed_finds': 0,
         }
+        
+        # Selenium & AI
+        self.driver = None  # Selenium WebDriver
+        self.ocr_reader = None  # EasyOCR reader
+        self.ai_model = None  # Gemini AI model
         
         self._detect_display_scale()
         self._load_config()
@@ -327,8 +359,307 @@ class MacroRunner:
             print(f"🖱️  Скролл {emoji} {direction}: {abs(scroll_amount)} x{clicks}")
             return True
         
+        # SELENIUM ACTIONS
+        elif action == 'selenium_init':
+            return self._selenium_init(step)
+        elif action == 'selenium_find':
+            return self._selenium_find(step)
+        elif action == 'selenium_click':
+            return self._selenium_click(step)
+        elif action == 'selenium_type':
+            return self._selenium_type(step)
+        elif action == 'selenium_scroll':
+            return self._selenium_scroll(step)
+        elif action == 'selenium_close':
+            return self._selenium_close(step)
+        
+        # AI ACTIONS
+        elif action == 'ai_extract_text':
+            return self._ai_extract_text(step)
+        elif action == 'ai_generate':
+            return self._ai_generate(step)
+        
         else:
             print(f"❌ Неизвестное действие: {action}")
+            return False
+    
+    # ==================== SELENIUM МЕТОДЫ ====================
+    
+    def _selenium_init(self, step: dict) -> bool:
+        """Инициализация Selenium WebDriver"""
+        if not SELENIUM_AVAILABLE:
+            print("❌ Selenium недоступен")
+            return False
+        
+        browser = step.get('browser', 'chrome')
+        headless = step.get('headless', False)
+        url = step.get('url')
+        
+        try:
+            print(f"🌐 Запуск {browser} (headless={headless})...")
+            
+            if browser == 'chrome':
+                options = webdriver.ChromeOptions()
+                if headless:
+                    options.add_argument('--headless')
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-dev-shm-usage')
+                
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=options)
+            
+            if url:
+                print(f"📍 Переход на: {url}")
+                self.driver.get(url)
+            
+            print("✅ Selenium инициализирован")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка Selenium: {e}")
+            return False
+    
+    def _selenium_find(self, step: dict) -> bool:
+        """Поиск элемента через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        selector = step.get('selector')
+        index = step.get('index', 0)
+        wait_for_element = step.get('wait_for_element', False)
+        timeout = step.get('timeout', 10.0)
+        save_element = step.get('save_element')
+        
+        try:
+            if wait_for_element:
+                print(f"⏳ Ожидание элемента (timeout: {timeout}с)...")
+                wait = WebDriverWait(self.driver, timeout)
+                element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+            else:
+                elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                if not elements:
+                    print(f"❌ Элемент не найден: {selector}")
+                    return False
+                element = elements[index]
+            
+            print(f"✅ Элемент найден: {selector}")
+            
+            if save_element:
+                self.variables[save_element] = element
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка поиска: {e}")
+            return False
+    
+    def _selenium_click(self, step: dict) -> bool:
+        """Клик через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        selector = step.get('selector')
+        element = step.get('element')  # или сохраненный элемент
+        
+        try:
+            if element and isinstance(element, str):
+                # Используем сохраненный элемент
+                elem = self.variables.get(element)
+            else:
+                # Ищем по селектору
+                elem = self.driver.find_element(By.CSS_SELECTOR, selector)
+            
+            elem.click()
+            print(f"🖱️  Selenium клик: {selector}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка клика: {e}")
+            return False
+    
+    def _selenium_type(self, step: dict) -> bool:
+        """Ввод текста через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        selector = step.get('selector')
+        text = step.get('text', '')
+        
+        # Подставляем переменные
+        text = text.format(**self.variables)
+        
+        try:
+            elem = self.driver.find_element(By.CSS_SELECTOR, selector)
+            elem.clear()
+            elem.send_keys(text)
+            print(f"⌨️  Selenium ввод: {text[:50]}...")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка ввода: {e}")
+            return False
+    
+    def _selenium_scroll(self, step: dict) -> bool:
+        """Скролл через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        direction = step.get('direction', 'down')
+        amount = step.get('amount', 300)
+        
+        try:
+            scroll_amount = amount if direction == 'down' else -amount
+            self.driver.execute_script(f"window.scrollBy(0, {scroll_amount})")
+            
+            emoji = "⬇️" if direction == 'down' else "⬆️"
+            print(f"🖱️  Selenium скролл {emoji}: {amount}px")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка скролла: {e}")
+            return False
+    
+    def _selenium_close(self, step: dict) -> bool:
+        """Закрыть Selenium"""
+        if self.driver:
+            try:
+                self.driver.quit()
+                self.driver = None
+                print("✅ Selenium закрыт")
+                return True
+            except Exception as e:
+                print(f"❌ Ошибка закрытия: {e}")
+                return False
+        return True
+    
+    # ==================== AI МЕТОДЫ ====================
+    
+    def _ai_extract_text(self, step: dict) -> bool:
+        """Извлечение текста (Selenium или OCR)"""
+        method = step.get('method', 'selenium')
+        fallback = step.get('fallback', 'ocr')
+        save_to = step.get('save_to')
+        
+        text = None
+        
+        # 1️⃣ Попытка через Selenium
+        if method == 'selenium' and self.driver:
+            selector = step.get('selector')
+            try:
+                element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                text = element.text
+                print(f"✅ Selenium: извлечено {len(text)} символов")
+            except Exception as e:
+                print(f"⚠️  Selenium не сработал: {e}")
+                
+                # 2️⃣ Fallback на OCR
+                if fallback == 'ocr':
+                    print("🔄 Переключение на OCR...")
+                    text = self._ocr_extract(step)
+        
+        # Или сразу OCR
+        elif method == 'ocr':
+            text = self._ocr_extract(step)
+        
+        # Сохраняем в переменную
+        if text and save_to:
+            self.variables[save_to] = text
+            print(f"📝 Текст: {text[:100]}...")
+            return True
+        else:
+            print("❌ Не удалось извлечь текст")
+            return False
+    
+    def _ocr_extract(self, step: dict) -> Optional[str]:
+        """Извлечение текста через OCR"""
+        if not OCR_AVAILABLE:
+            print("❌ EasyOCR недоступен")
+            return None
+        
+        # Инициализация OCR (один раз)
+        if not self.ocr_reader:
+            print("🔄 Инициализация EasyOCR...")
+            self.ocr_reader = easyocr.Reader(['ru', 'en'], gpu=False)
+        
+        region = step.get('region')
+        
+        try:
+            # Скриншот региона
+            if region and region != 'auto':
+                x, y, w, h = region
+                screenshot = pyautogui.screenshot(region=(x, y, w, h))
+            else:
+                # Автопоиск текстового блока (упрощенно - весь экран)
+                screenshot = pyautogui.screenshot()
+            
+            # OCR
+            img_array = np.array(screenshot)
+            results = self.ocr_reader.readtext(img_array)
+            
+            # Объединяем весь текст
+            text = ' '.join([result[1] for result in results])
+            
+            print(f"✅ OCR: извлечено {len(text)} символов")
+            return text
+            
+        except Exception as e:
+            print(f"❌ Ошибка OCR: {e}")
+            return None
+    
+    def _ai_generate(self, step: dict) -> bool:
+        """Генерация ответа через AI"""
+        if not AI_AVAILABLE:
+            print("❌ Gemini API недоступен")
+            return False
+        
+        model = step.get('model', 'gemini')
+        prompt = step.get('prompt', '')
+        save_to = step.get('save_to')
+        max_tokens = step.get('max_tokens', 100)
+        temperature = step.get('temperature', 0.7)
+        
+        # Подставляем переменные в промпт
+        prompt = prompt.format(**self.variables)
+        
+        try:
+            # Инициализация AI (один раз)
+            if not self.ai_model:
+                api_key = os.getenv('GEMINI_API_KEY')
+                if not api_key:
+                    print("❌ GEMINI_API_KEY не найден в переменных окружения")
+                    return False
+                
+                genai.configure(api_key=api_key)
+                self.ai_model = genai.GenerativeModel('gemini-pro')
+                print("✅ Gemini API инициализирован")
+            
+            # Генерация
+            print(f"🤖 AI генерация...")
+            print(f"   Промпт: {prompt[:100]}...")
+            
+            response = self.ai_model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=max_tokens,
+                    temperature=temperature,
+                )
+            )
+            
+            reply = response.text.strip()
+            
+            # Сохраняем
+            if save_to:
+                self.variables[save_to] = reply
+            
+            print(f"✅ AI ответ: {reply}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка AI: {e}")
             return False
     
     def run_sequence(self, sequence_name: str, delay: int = 3):
