@@ -471,8 +471,14 @@ class MacroRunner:
         # SELENIUM ACTIONS
         elif action == 'selenium_init':
             return self._selenium_init(step)
+        elif action == 'selenium_connect':
+            return self._selenium_connect(step)
+        elif action == 'selenium_navigate':
+            return self._selenium_navigate(step)
         elif action == 'selenium_find':
             return self._selenium_find(step)
+        elif action == 'selenium_extract':
+            return self._selenium_extract(step)
         elif action == 'selenium_click':
             return self._selenium_click(step)
         elif action == 'selenium_type':
@@ -528,6 +534,52 @@ class MacroRunner:
             print(f"❌ Ошибка Selenium: {e}")
             return False
     
+    def _selenium_connect(self, step: dict) -> bool:
+        """Подключение к существующему браузеру через remote debugging"""
+        if not SELENIUM_AVAILABLE:
+            print("❌ Selenium недоступен")
+            return False
+        
+        browser = step.get('browser', 'chrome')
+        debugger_address = step.get('debugger_address', '127.0.0.1:9222')
+        
+        try:
+            print(f"🔗 Подключение к {browser} на {debugger_address}...")
+            
+            if browser == 'chrome':
+                options = webdriver.ChromeOptions()
+                options.add_experimental_option("debuggerAddress", debugger_address)
+                
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=options)
+            
+            print("✅ Selenium подключен к существующему браузеру")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка подключения: {e}")
+            print("💡 Убедись что Chrome запущен с --remote-debugging-port=9222")
+            return False
+    
+    def _selenium_navigate(self, step: dict) -> bool:
+        """Навигация на URL"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        url = step.get('url')
+        if not url:
+            print("❌ URL не указан")
+            return False
+        
+        try:
+            print(f"📍 Переход на: {url}")
+            self.driver.get(url)
+            return True
+        except Exception as e:
+            print(f"❌ Ошибка навигации: {e}")
+            return False
+    
     def _selenium_find(self, step: dict) -> bool:
         """Поиск элемента через Selenium"""
         if not self.driver:
@@ -561,6 +613,49 @@ class MacroRunner:
             
         except Exception as e:
             print(f"❌ Ошибка поиска: {e}")
+            return False
+    
+    def _selenium_extract(self, step: dict) -> bool:
+        """Извлечение текста элемента через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        selector = step.get('selector')
+        index = step.get('index', 0)
+        save_to = step.get('save_to')
+        wait_for_element = step.get('wait_for_element', True)
+        timeout = step.get('timeout', 10.0)
+        
+        try:
+            if wait_for_element:
+                print(f"⏳ Ожидание элемента (timeout: {timeout}с)...")
+                wait = WebDriverWait(self.driver, timeout)
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+            
+            elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+            if not elements:
+                print(f"❌ Элемент не найден: {selector}")
+                return False
+            
+            if index >= len(elements):
+                print(f"⚠️  Индекс {index} вне диапазона (найдено {len(elements)} элементов)")
+                index = 0
+            
+            element = elements[index]
+            text = element.text
+            
+            if text and save_to:
+                self.variables[save_to] = text
+                print(f"✅ Selenium: извлечено {len(text)} символов")
+                print(f"📝 Текст: {text[:100]}...")
+                return True
+            else:
+                print("⚠️  Текст пустой")
+                return False
+            
+        except Exception as e:
+            print(f"❌ Ошибка извлечения: {e}")
             return False
     
     def _selenium_click(self, step: dict) -> bool:
