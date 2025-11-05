@@ -29,6 +29,8 @@ sequences:
       direction: down
       amount: ${scroll_amount}  # Использование переменной
       clicks: 1
+      # NOTE: Скролл выполняется в центре экрана автоматически
+      # Можно указать x, y для скролла в конкретной позиции
       description: Следующее видео
     repeat: 50
 
@@ -124,6 +126,36 @@ sequences:
       clicks: 3
       description: Просмотр результатов
     # NOTE: Далее нужно добавить OCR для чтения цен
+
+  # Пример 6: Скролл с координатами
+  scroll_examples:
+    name: Примеры скролла
+    description: Различные варианты скролла
+    platform: generic
+    tags: [scroll, examples]
+    steps:
+    # Вариант 1: Скролл в центре экрана (автоматически)
+    - action: scroll
+      direction: down
+      amount: 10
+      clicks: 1
+      description: Скролл в центре экрана
+    
+    # Вариант 2: Скролл в конкретной позиции
+    - action: scroll
+      direction: down
+      amount: 15
+      clicks: 1
+      x: 500
+      y: 400
+      description: Скролл в позиции (500, 400)
+    
+    # Вариант 3: Множественный скролл
+    - action: scroll
+      direction: down
+      amount: 5
+      clicks: 5
+      description: Скролл 5 раз по 5 единиц
 
 settings:
   # Глобальные настройки

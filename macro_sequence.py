@@ -256,9 +256,33 @@ class MacroRunner:
         elif action == 'scroll':
             direction = step.get('direction', 'down')
             amount = step.get('amount', 5)
+            clicks = step.get('clicks', 1)
+            
+            # Проверяем координаты для скролла
+            x = step.get('x')
+            y = step.get('y')
+            
+            # Если координаты не указаны - используем центр экрана
+            if x is None or y is None:
+                screen_size = pyautogui.size()
+                x = screen_size.width // 2
+                y = screen_size.height // 2
+                print(f"📍 Скролл в центре экрана: ({x}, {y})")
+            else:
+                print(f"📍 Скролл в позиции: ({x}, {y})")
+            
+            # Перемещаем курсор в нужную позицию
+            pyautogui.moveTo(x, y, duration=0.2)
+            
+            # Выполняем скролл нужное количество раз
             scroll_amount = amount if direction == 'down' else -amount
-            pyautogui.scroll(scroll_amount)
-            print(f"🖱️  Скролл {direction}: {amount}")
+            for i in range(clicks):
+                pyautogui.scroll(scroll_amount)
+                if clicks > 1 and i < clicks - 1:
+                    time.sleep(0.3)
+            
+            emoji = "⬇️" if direction == 'down' else "⬆️"
+            print(f"🖱️  Скролл {emoji} {direction}: {amount} x{clicks}")
             return True
         
         else:

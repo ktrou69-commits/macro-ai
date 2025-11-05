@@ -1,0 +1,66 @@
+📂 Macro AI - Структура проекта
+═══════════════════════════════════════════════════════════
+
+📁 local-macros/
+│
+├── 📄 README.md                    ← Главная документация
+├── 📄 requirements.txt             ← Зависимости Python
+├── 📄 my_sequences.yaml            ← Твои последовательности
+├── 📄 templates_library.yaml       ← Библиотека шаблонов (AI)
+│
+├── 🎯 sequence_builder.py          ← Конструктор последовательностей
+├── 🚀 macro_sequence.py            ← Запуск последовательностей
+│
+├── 📁 utils/                       ← Утилиты
+│   └── 📸 smart_capture.py         ← Захват шаблонов кнопок
+│
+├── �� templates/                   ← Шаблоны кнопок (PNG)
+│   ├── acceptAll_button.png
+│   ├── button.png
+│   ├── down_button.png
+│   ├── entergpt_button.png
+│   ├── gptsearch_button.png
+│   ├── plus_button.png
+│   └── tiktok_site.png
+│
+├── 📁 docs/                        ← Документация
+│   ├── AI_INTEGRATION.md           ← AI-совместимость
+│   ├── FINAL_CHECK.md              ← Финальная проверка
+│   ├── FINAL_STATUS.md             ← Статус проекта
+│   ├── FIXES_REPORT.md             ← Отчет об исправлениях
+│   └── test_scenarios.md           ← Тестовые сценарии
+│
+├── 📁 examples/                    ← Примеры конфигов
+│   └── example_ai_sequences.yaml   ← Примеры с AI-метаданными
+│
+└── 📁 archive/                     ← Старые файлы (не в Git)
+
+═══════════════════════════════════════════════════════════
+
+🎯 Основной workflow:
+
+1. 📸 Захват кнопки:
+   python3 utils/smart_capture.py
+   → Создает templates/button.png
+
+2. 🎯 Создание последовательности:
+   python3 sequence_builder.py
+   → Создает/редактирует my_sequences.yaml
+
+3. 🚀 Запуск:
+   python3 macro_sequence.py --config my_sequences.yaml --run name
+
+═══════════════════════════════════════════════════════════
+
+📊 Статистика:
+
+Основные файлы:     3 (smart_capture, sequence_builder, macro_sequence)
+Шаблоны:            7 PNG
+Документация:       5 MD
+Примеры:            1 YAML
+Конфиги:            2 YAML (my_sequences, templates_library)
+
+Всего строк кода:   ~1500 строк Python
+Размер проекта:     ~50 KB (без templates)
+
+═══════════════════════════════════════════════════════════

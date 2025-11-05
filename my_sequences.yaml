@@ -96,4 +96,54 @@ sequences:
       y: 67.19921875
       clicks: 1
       description: Клик в (372.01171875, 67.19921875)
+  tiktokopener:
+    name: atlas - tiktok opener
+    steps:
+    - action: click
+      template: templates/button.png
+      clicks: 2
+      interval: 0.3
+      wait_for_appear: true
+      timeout: 1.5
+      description: Нажатие на кнопку атлас на рабочем столе
+    - action: click
+      template: templates/plus_button.png
+      clicks: 1
+      description: Нажати на плюс для создания новой вкладки браузера атлас
+    - action: click
+      template: templates/gptsearch_button.png
+      clicks: 1
+      description: Нажатие на ввод запроса браузеру атлас
+    - action: type
+      text: Tik Tok
+      description: Ввод надписи в поле ввода для перехода на броаузер поиск
+    - action: click
+      template: templates/entergpt_button.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 2.0
+      description: Отправка введенного текста
+    - action: click
+      template: templates/tiktok_openSite-btn.png
+      clicks: 1
+      wait_for_appear: true
+      timeout: 4.0
+      description: Нажатие на веб сайт Тик Ток в браузере Атлас
+    - action: wait
+      duration: 2.0
+      description: Пауза на прогрузку тик ток
+    - action: click
+      template: templates/atlas-tiktok_like_btn.png
+      clicks: 1
+      description: Нажатие на кнопку лайка в тик ток
+    - action: scroll
+      direction: down
+      amount: 15
+      clicks: 1
+      description: scroll down tiktok atlas browser
+    description: atlas - tiktok opener
+    platform: tiktok
+    tags:
+    - tiktok
+    - atlas
 settings: {}
