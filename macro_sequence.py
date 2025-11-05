@@ -156,8 +156,80 @@ class MacroRunner:
         print(f"📥 Загружен шаблон: {Path(template_path).name} ({template.shape[1]}x{template.shape[0]})")
         return template
     
-    def _find_template(self, template_path: str, threshold: float = DEFAULT_THRESHOLD) -> Tuple[bool, Optional[Tuple[int, int]], float]:
-        """Поиск шаблона на экране"""
+    def _find_all_templates(self, template_path: str, threshold: float = DEFAULT_THRESHOLD) -> list:
+        """Поиск ВСЕХ совпадений шаблона на экране"""
+        template = self._load_template(template_path)
+        if template is None:
+            return []
+        
+        # Захват экрана
+        screenshot = pyautogui.screenshot()
+        frame = np.array(screenshot)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
+        # Template matching
+        res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
+        
+        # Найти ВСЕ совпадения выше threshold
+        locations = np.where(res >= threshold)
+        matches = []
+        
+        h, w = template.shape
+        
+        for pt in zip(*locations[::-1]):  # Switch x and y
+            score = res[pt[1], pt[0]]
+            
+            # Центр на физическом разрешении
+            center_x = int((pt[0] + w / 2) / self.display_scale)
+            center_y = int((pt[1] + h / 2) / self.display_scale)
+            
+            matches.append({
+                'coords': (center_x, center_y),
+                'score': float(score),
+                'top_left': pt
+            })
+        
+        # Сортировать по score (лучшие первые)
+        matches.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Убрать дубликаты (близкие координаты)
+        filtered_matches = []
+        for match in matches:
+            is_duplicate = False
+            for existing in filtered_matches:
+                dx = abs(match['coords'][0] - existing['coords'][0])
+                dy = abs(match['coords'][1] - existing['coords'][1])
+                if dx < 20 and dy < 20:  # Если ближе 20px - дубликат
+                    is_duplicate = True
+                    break
+            if not is_duplicate:
+                filtered_matches.append(match)
+        
+        return filtered_matches
+    
+    def _find_template(self, template_path: str, threshold: float = DEFAULT_THRESHOLD, index: int = 0) -> Tuple[bool, Optional[Tuple[int, int]], float]:
+        """Поиск шаблона на экране (с поддержкой выбора конкретного совпадения)"""
+        # Найти все совпадения
+        matches = self._find_all_templates(template_path, threshold)
+        
+        if not matches:
+            return False, None, 0.0
+        
+        # Выбрать нужное совпадение по индексу
+        if index >= len(matches):
+            print(f"⚠️  Индекс {index} вне диапазона (найдено {len(matches)} совпадений), используем первое")
+            index = 0
+        
+        match = matches[index]
+        
+        if len(matches) > 1:
+            print(f"ℹ️  Найдено {len(matches)} совпадений, выбрано #{index + 1}")
+        
+        return True, match['coords'], match['score']
+    
+    def _find_template_old(self, template_path: str, threshold: float = DEFAULT_THRESHOLD) -> Tuple[bool, Optional[Tuple[int, int]], float]:
+        """Старый метод поиска (одно лучшее совпадение)"""
         template = self._load_template(template_path)
         if template is None:
             return False, None, 0.0
@@ -263,6 +335,9 @@ class MacroRunner:
                 print("❌ Не указан шаблон или координаты для клика")
                 return False
             
+            # Поддержка выбора конкретного совпадения
+            index = step.get('index', 0)
+            
             # Поддержка wait_for_appear и timeout
             wait_for_appear = step.get('wait_for_appear', False)
             timeout = step.get('timeout', 5.0)
@@ -273,7 +348,7 @@ class MacroRunner:
                 found = False
                 
                 while time.time() - start_time < timeout:
-                    found, coords, score = self._find_template(template)
+                    found, coords, score = self._find_template(template, index=index)
                     if found:
                         break
                     time.sleep(0.5)
@@ -282,7 +357,7 @@ class MacroRunner:
                     print(f"❌ Шаблон не появился за {timeout}с")
                     return False
             else:
-                found, coords, score = self._find_template(template)
+                found, coords, score = self._find_template(template, index=index)
                 if not found:
                     print(f"❌ Шаблон не найден: {template} (score: {score:.3f})")
                     return False
