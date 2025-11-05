@@ -75,6 +75,15 @@ python3 utils/smart_capture.py
   y: 650
 ```
 
+### Несколько одинаковых кнопок:
+```yaml
+# Выбери конкретную по индексу
+- action: click
+  template: templates/button.png
+  index: 0  # Первая (лучший score)
+  index: 1  # Вторая
+```
+
 ### OCR не читает:
 ```yaml
 # Увеличь область
