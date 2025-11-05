@@ -1,0 +1,192 @@
+# 🤖 TikTok AI Comments для Atlas браузера
+# Гибридный подход: Template matching + OCR + AI
+
+variables:
+  reply_count: 5
+  ai_model: gemini
+  reply_tone: дружелюбный
+
+sequences:
+  # ========== Atlas браузер + AI ==========
+  tiktok_ai_atlas:
+    name: TikTok AI ответы (Atlas)
+    description: Умные ответы через Atlas браузер + OCR + Gemini
+    platform: tiktok
+    tags: [ai, atlas, comments, hybrid]
+    
+    steps:
+    # 1. Открыть Atlas и TikTok (вручную или через существующие макросы)
+    - action: click
+      template: templates/button.png
+      clicks: 2
+      interval: 0.3
+      wait_for_appear: true
+      timeout: 1.5
+      description: Открыть Atlas браузер
+    
+    - action: wait
+      duration: 2.0
+      description: Ожидание запуска Atlas
+    
+    # 2. Открыть TikTok (если нужно)
+    - action: click
+      template: templates/plus_button.png
+      description: Новая вкладка
+    
+    - action: click
+      template: templates/gptsearch_button.png
+      description: Поиск
+    
+    - action: type
+      text: "Tik Tok"
+      description: Ввод TikTok
+    
+    - action: click
+      template: templates/entergpt_button.png
+      wait_for_appear: true
+      timeout: 2.0
+      description: Отправить
+    
+    - action: click
+      template: templates/tiktok_openSite-btn.png
+      wait_for_appear: true
+      timeout: 4.0
+      description: Открыть TikTok
+    
+    - action: wait
+      duration: 3.0
+      description: Загрузка TikTok
+    
+    # 3. Открыть комментарии
+    - action: click
+      template: templates/atlas-TikTok_search_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии или поиск
+    
+    - action: wait
+      duration: 2.0
+    
+    # 4. Повторить для нескольких комментариев
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать комментарии
+      steps:
+      
+      # 4.1. Извлечь текст комментария (OCR)
+      - action: ai_extract_text
+        method: ocr
+        region: [100, 300, 600, 100]  # Область комментария
+        save_to: comment_text
+        description: Прочитать комментарий через OCR
+      
+      # 4.2. AI генерация ответа
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши {reply_tone} ответ на комментарий TikTok (максимум 50 символов): {comment_text}"
+        max_tokens: 50
+        temperature: 0.7
+        save_to: reply_text
+        description: Сгенерировать ответ через Gemini
+      
+      # 4.3. Кликнуть "Ответить" (Template)
+      - action: click
+        template: templates/atlas-tiktok_reply_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Открыть поле ответа
+      
+      # 4.4. Ввести ответ (pyautogui)
+      - action: type
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      # 4.5. Отправить (Enter)
+      - action: key
+        key: enter
+        description: Отправить ответ
+      
+      # 4.6. Пауза
+      - action: wait
+        duration: 2.0
+        description: Пауза между комментариями
+      
+      # 4.7. Скролл к следующему
+      - action: scroll
+        direction: down
+        amount: 10
+        description: Следующий комментарий
+
+  # ========== Упрощенная версия (только AI ответы) ==========
+  tiktok_ai_simple:
+    name: TikTok AI простые ответы
+    description: Только OCR + AI генерация для уже открытых комментариев
+    platform: tiktok
+    tags: [ai, simple]
+    
+    steps:
+    # Предполагается что TikTok уже открыт в Atlas
+    
+    - action: repeat
+      times: 3
+      steps:
+      
+      # 1. Прочитать комментарий
+      - action: ai_extract_text
+        method: ocr
+        region: [200, 400, 500, 80]  # Настрой под свой экран
+        save_to: comment_text
+      
+      # 2. AI ответ
+      - action: ai_generate
+        prompt: "Короткий дружелюбный ответ: {comment_text}"
+        max_tokens: 50
+        save_to: reply_text
+      
+      # 3. Показать ответ (для проверки)
+      - action: wait
+        duration: 1.0
+        description: "AI ответ: {reply_text}"
+      
+      # 4. Кликнуть поле ввода (координаты)
+      - action: click
+        position: absolute
+        x: 400
+        y: 650
+        description: Поле ввода комментария
+      
+      # 5. Ввести
+      - action: type
+        text: "{reply_text}"
+      
+      # 6. Отправить
+      - action: key
+        key: enter
+      
+      # 7. Скролл
+      - action: scroll
+        direction: down
+        amount: 10
+
+  # ========== Тест AI генерации ==========
+  test_ai_generation:
+    name: Тест AI генерации
+    description: Проверка работы Gemini API
+    
+    steps:
+    # Тестовый комментарий
+    - action: ai_generate
+      model: gemini
+      prompt: "Напиши короткий дружелюбный ответ на комментарий: 'Отличное видео! Очень понравилось 👍'"
+      max_tokens: 50
+      temperature: 0.7
+      save_to: test_reply
+      description: Тест AI
+    
+    - action: wait
+      duration: 2.0
+      description: "Результат: {test_reply}"
+
+settings:
+  default_delay: 3
+  failsafe: true

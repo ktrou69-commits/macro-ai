@@ -39,11 +39,11 @@ except ImportError:
     print("⚠️  EasyOCR не установлен. Установи: pip install easyocr")
 
 try:
-    import google.generativeai as genai
+    from google import genai
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
-    print("⚠️  Gemini API не установлен. Установи: pip install google-generativeai")
+    print("⚠️  Gemini API не установлен. Установи: pip install google-genai")
 
 # Настройки
 DEFAULT_THRESHOLD = 0.86
@@ -633,20 +633,16 @@ class MacroRunner:
                     print("❌ GEMINI_API_KEY не найден в переменных окружения")
                     return False
                 
-                genai.configure(api_key=api_key)
-                self.ai_model = genai.GenerativeModel('gemini-pro')
+                self.ai_model = genai.Client(api_key=api_key)
                 print("✅ Gemini API инициализирован")
             
             # Генерация
             print(f"🤖 AI генерация...")
             print(f"   Промпт: {prompt[:100]}...")
             
-            response = self.ai_model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=max_tokens,
-                    temperature=temperature,
-                )
+            response = self.ai_model.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
             )
             
             reply = response.text.strip()
