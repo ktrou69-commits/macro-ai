@@ -681,9 +681,15 @@ class SequenceBuilder:
         if not description:
             description = self.sequence_name
         
+        # Метаданные (опционально)
+        print("\n💡 Метаданные для AI (Enter=пропустить):")
+        platform = input("🌐 Платформа (tiktok/instagram/web/chatgpt): ").strip().lower()
+        tags_input = input("🏷️  Теги (через запятую): ").strip()
+        tags = [t.strip() for t in tags_input.split(',')] if tags_input else []
+        
         # Повторы
         while True:
-            repeat_input = input("🔄 Количество повторов (Enter=1): ").strip()
+            repeat_input = input("\n🔄 Количество повторов (Enter=1): ").strip()
             if repeat_input == "":
                 repeat = 1
                 break
@@ -700,6 +706,14 @@ class SequenceBuilder:
             'name': description,
             'steps': self.current_sequence
         }
+        
+        # Добавляем метаданные если указаны
+        if description != self.sequence_name:
+            sequence['description'] = description
+        if platform:
+            sequence['platform'] = platform
+        if tags:
+            sequence['tags'] = tags
         
         if repeat > 1:
             sequence['repeat'] = repeat

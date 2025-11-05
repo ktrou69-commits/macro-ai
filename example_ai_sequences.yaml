@@ -1,0 +1,132 @@
+# 🤖 Пример конфига с AI-совместимыми метаданными
+
+# Глобальные переменные
+variables:
+  pause_duration: 2.0
+  scroll_amount: 5
+  max_likes: 100
+  typing_speed: 0.05
+
+sequences:
+  # Пример 1: Полные метаданные
+  tiktok_auto_like:
+    name: Автоматические лайки TikTok
+    description: Лайкает посты и скроллит ленту
+    platform: tiktok
+    tags: [social, automation, likes]
+    # CONTEXT: Для продвижения аккаунта
+    # GOAL: Увеличение активности
+    # FREQUENCY: 2-3 раза в день
+    steps:
+    - action: click
+      template: templates/tiktok_like_button.png
+      clicks: 1
+      description: Лайк видео
+    - action: wait
+      duration: ${pause_duration}  # Использование переменной
+      description: Пауза между действиями
+    - action: scroll
+      direction: down
+      amount: ${scroll_amount}  # Использование переменной
+      clicks: 1
+      description: Следующее видео
+    repeat: 50
+
+  # Пример 2: ChatGPT автоматизация
+  chatgpt_auto_send:
+    name: Автоотправка в ChatGPT
+    description: Отправляет заготовленные промпты
+    platform: chatgpt
+    tags: [ai, productivity, automation]
+    # CONTEXT: Пакетная обработка запросов
+    # GOAL: Экономия времени на рутинных промптах
+    steps:
+    - action: type
+      text: "Напиши краткое резюме этого текста"
+      description: Ввод промпта
+    - action: wait
+      duration: 0.5
+    - action: click
+      template: templates/entergpt_button.png
+      clicks: 1
+      description: Отправка сообщения
+    - action: wait
+      duration: 5.0
+      description: Ожидание ответа
+
+  # Пример 3: Веб-автоматизация
+  accept_cookies:
+    name: Принятие cookies
+    description: Автоматически принимает cookies на сайтах
+    platform: web
+    tags: [web, cookies, privacy]
+    # CONTEXT: Первое посещение сайтов
+    # NOTE: Кнопка может быть в разных местах
+    steps:
+    - action: wait
+      duration: 1.0
+      description: Ожидание загрузки страницы
+    - action: click
+      template: templates/acceptAll_button.png
+      clicks: 1
+      description: Клик по Accept All
+      # NOTE: Если не найдена - пропустить
+
+  # Пример 4: Координаты + шаблоны
+  hybrid_sequence:
+    name: Гибридная последовательность
+    description: Комбинация template matching и координат
+    platform: generic
+    tags: [hybrid, flexible]
+    steps:
+    - action: click
+      template: templates/button.png
+      clicks: 1
+      description: Клик по шаблону
+    - action: wait
+      duration: ${pause_duration}
+    - action: click
+      position: absolute
+      x: 500
+      y: 300
+      clicks: 1
+      description: Клик по точным координатам
+    - action: scroll
+      direction: down
+      amount: 3
+
+  # Пример 5: Сложный workflow
+  ecommerce_monitor:
+    name: Мониторинг цен
+    description: Проверяет цены на товары конкурентов
+    platform: web
+    tags: [ecommerce, monitoring, prices]
+    # CONTEXT: E-commerce бизнес
+    # GOAL: Отслеживание цен конкурентов
+    # FREQUENCY: Каждые 2 часа
+    # OUTPUT: Сохранение в Excel
+    steps:
+    - action: click
+      template: templates/google_search_button.png
+      description: Открыть поиск
+    - action: type
+      text: "конкурент товар цена"
+      description: Ввод запроса
+    - action: key
+      key: enter
+      description: Поиск
+    - action: wait
+      duration: 3.0
+      description: Загрузка результатов
+    - action: scroll
+      direction: down
+      amount: 5
+      clicks: 3
+      description: Просмотр результатов
+    # NOTE: Далее нужно добавить OCR для чтения цен
+
+settings:
+  # Глобальные настройки
+  default_delay: 3
+  failsafe: true
+  screenshot_on_error: true

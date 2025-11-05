@@ -35,6 +35,8 @@ class MacroRunner:
         self.config_path = config_path
         self.config = {}
         self.templates = {}
+        self.templates_library = {}  # Библиотека шаблонов
+        self.variables = {}  # Переменные
         self.display_scale = 1.0
         self.stats = {
             'total_clicks': 0,
@@ -44,6 +46,8 @@ class MacroRunner:
         
         self._detect_display_scale()
         self._load_config()
+        self._load_templates_library()
+        self._load_variables()
     
     def _detect_display_scale(self):
         """Определение Retina scale"""
@@ -71,6 +75,35 @@ class MacroRunner:
         except Exception as e:
             print(f"❌ Ошибка загрузки конфига: {e}")
             self.config = {'sequences': {}, 'settings': {}}
+    
+    def _load_templates_library(self):
+        """Загрузка библиотеки шаблонов"""
+        library_path = "templates_library.yaml"
+        if not os.path.exists(library_path):
+            return
+        
+        try:
+            with open(library_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                self.templates_library = data.get('templates', {})
+            print(f"📚 Загружена библиотека шаблонов: {len(self.templates_library)} шаблонов")
+        except Exception as e:
+            print(f"⚠️  Ошибка загрузки библиотеки: {e}")
+    
+    def _load_variables(self):
+        """Загрузка переменных из конфига"""
+        self.variables = self.config.get('variables', {})
+        if self.variables:
+            print(f"🔧 Загружено переменных: {len(self.variables)}")
+            for key, value in self.variables.items():
+                print(f"   {key} = {value}")
+    
+    def _resolve_variable(self, value):
+        """Разрешение переменных вида ${var_name}"""
+        if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
+            var_name = value[2:-1]
+            return self.variables.get(var_name, value)
+        return value
     
     def _load_template(self, template_path: str) -> Optional[np.ndarray]:
         """Загрузка шаблона"""
@@ -164,7 +197,8 @@ class MacroRunner:
         
         # WAIT
         elif action == 'wait':
-            duration = step.get('duration', 1.0)
+            duration = self._resolve_variable(step.get('duration', 1.0))
+            duration = float(duration)
             print(f"⏸️  Пауза {duration}с")
             time.sleep(duration)
             return True
@@ -223,8 +257,20 @@ class MacroRunner:
         sequence = sequences[sequence_name]
         steps = sequence.get('steps', [])
         
+        # Вывод метаданных
         print("\n" + "="*60)
         print(f"🚀 Запуск: {sequence_name}")
+        
+        # Название и описание
+        if 'name' in sequence and sequence['name'] != sequence_name:
+            print(f"📝 Название: {sequence['name']}")
+        if 'description' in sequence:
+            print(f"📄 Описание: {sequence['description']}")
+        if 'platform' in sequence:
+            print(f"🌐 Платформа: {sequence['platform']}")
+        if 'tags' in sequence:
+            print(f"🏷️  Теги: {', '.join(sequence['tags'])}")
+        
         print(f"📊 Шагов: {len(steps)}")
         print("="*60)
         
