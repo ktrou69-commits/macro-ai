@@ -47,10 +47,10 @@ sequences:
       
       # 4.1. Извлечь текст комментария (Selenium - динамическая длина!)
       - action: selenium_extract
-        selector: "[data-e2e='comment-level-1'] [data-e2e='comment-text']"
+        selector: "[class*='comment-sidebar'] span"
         index: 0  # Первый видимый комментарий
         save_to: comment_text
-        description: Прочитать комментарий через Selenium
+        description: Прочитать комментарий через Selenium (любая длина!)
       
       # 4.2. AI генерация ответа
       - action: ai_generate

@@ -80,6 +80,3 @@ archive/
 
 # Development files
 .dev/
-
-# Tests
-tests/
