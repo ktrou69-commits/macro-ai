@@ -479,6 +479,8 @@ class MacroRunner:
             return self._selenium_find(step)
         elif action == 'selenium_extract':
             return self._selenium_extract(step)
+        elif action == 'selenium_get_coordinates':
+            return self._selenium_get_coordinates(step)
         elif action == 'selenium_click':
             return self._selenium_click(step)
         elif action == 'selenium_type':
@@ -656,6 +658,50 @@ class MacroRunner:
             
         except Exception as e:
             print(f"❌ Ошибка извлечения: {e}")
+            return False
+    
+    def _selenium_get_coordinates(self, step: dict) -> bool:
+        """Получить координаты элемента через Selenium"""
+        if not self.driver:
+            print("❌ Selenium не инициализирован")
+            return False
+        
+        selector = step.get('selector')
+        index = step.get('index', 0)
+        save_x = step.get('save_x', 'element_x')
+        save_y = step.get('save_y', 'element_y')
+        
+        try:
+            elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+            if not elements:
+                print(f"❌ Элемент не найден: {selector}")
+                return False
+            
+            if index >= len(elements):
+                print(f"⚠️  Индекс {index} вне диапазона (найдено {len(elements)} элементов)")
+                index = 0
+            
+            element = elements[index]
+            
+            # Получить координаты и размер
+            location = element.location
+            size = element.size
+            
+            # Вычислить центр элемента
+            center_x = location['x'] + size['width'] / 2
+            center_y = location['y'] + size['height'] / 2
+            
+            # Сохранить в переменные
+            self.variables[save_x] = int(center_x)
+            self.variables[save_y] = int(center_y)
+            
+            print(f"✅ Координаты получены: ({center_x}, {center_y})")
+            print(f"   Сохранено: {save_x}={center_x}, {save_y}={center_y}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Ошибка получения координат: {e}")
             return False
     
     def _selenium_click(self, step: dict) -> bool:

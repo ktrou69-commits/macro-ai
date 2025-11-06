@@ -1,0 +1,121 @@
+# 🧠 Умный гибридный подход
+#
+# Selenium - для поиска комментариев и получения координат
+# PyAutoGUI - для эмуляции действий пользователя (клики)
+# Template - для ввода текста и отправки
+# AI - для генерации ответов
+
+variables:
+  ai_model: gemini-2.0-flash-exp
+  reply_count: 3
+  reply_tone: дружелюбный
+  comment_index: 1  # Какой комментарий обрабатывать (0=первый, 1=второй, 2=третий)
+
+sequences:
+  tiktok_smart_hybrid:
+    name: TikTok Smart Hybrid
+    description: Selenium находит, PyAutoGUI кликает, AI отвечает
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    # 2. Открыть комментарии (Template)
+    - action: click
+      template: templates/tiktok_comments_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии
+    
+    - action: wait
+      duration: 2.0
+    
+    # 3. Повторить для нескольких комментариев
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать комментарии
+      steps:
+      
+      # 3.1. Selenium: Извлечь текст КОНКРЕТНОГО комментария
+      - action: selenium_extract
+        selector: "[class*='comment-sidebar'] [data-e2e='comment-level-1']"
+        index: "{comment_index}"  # Какой комментарий (0, 1, 2...)
+        save_to: comment_text
+        description: Прочитать комментарий #{comment_index}
+      
+      # 3.2. AI: Сгенерировать ответ
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши {reply_tone} ответ на комментарий TikTok (максимум 50 символов): {comment_text}"
+        max_tokens: 50
+        temperature: 0.7
+        save_to: reply_text
+        description: Сгенерировать ответ через Gemini
+      
+      # 3.3. Selenium: Получить координаты кнопки "Ответить" ЭТОГО комментария
+      - action: selenium_get_coordinates
+        selector: "[class*='comment-sidebar'] [data-e2e='comment-level-1']:nth-child({comment_index}) button[aria-label*='Reply']"
+        index: 0
+        save_x: reply_button_x
+        save_y: reply_button_y
+        description: Получить координаты кнопки "Ответить"
+      
+      # 3.4. PyAutoGUI: Кликнуть по координатам (эмуляция пользователя!)
+      - action: click
+        position: absolute
+        x: "{reply_button_x}"
+        y: "{reply_button_y}"
+        description: Кликнуть "Ответить" (эмуляция)
+      
+      - action: wait
+        duration: 0.5
+      
+      # 3.5. Двойной клик для надежности
+      - action: click
+        position: absolute
+        x: "{reply_button_x}"
+        y: "{reply_button_y}"
+        description: Второй клик (открыть поле ответа)
+      
+      - action: wait
+        duration: 1.0
+      
+      # 3.6. Template: Кликнуть поле ввода
+      - action: click
+        template: templates/tiktok_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Активировать поле ввода
+      
+      # 3.7. PyAutoGUI: Ввести ответ
+      - action: type
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      # 3.8. Template: Отправить
+      - action: click
+        templates:
+          - templates/tiktok_send_btn_long.png
+          - templates/tiktok_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        index: 1
+        description: Кнопка отправить (верхняя)
+      
+      # 3.9. Пауза
+      - action: wait
+        duration: 2.0
+        description: Пауза между комментариями
+      
+      # 3.10. Увеличить индекс для следующего комментария
+      - action: set_variable
+        name: comment_index
+        value: "{comment_index + 1}"
+        description: Следующий комментарий
+
+settings:
+  default_delay: 1
+  failsafe: true
