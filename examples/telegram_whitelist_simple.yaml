@@ -1,0 +1,201 @@
+# Telegram Whitelist Simple - Простая версия для конкретных людей
+# Обрабатывает людей по очереди
+
+sequences:
+  telegram_whitelist_simple:
+    name: "Telegram Whitelist Simple"
+    description: "Отвечает конкретным людям (простая версия)"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Бесконечный цикл - проверяем каждого человека
+    - action: repeat
+      times: 999999
+      description: Обрабатывать whitelist
+      steps:
+      
+      # ========== ЧЕЛОВЕК 1: Fsdf (7204684283) ==========
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='7204684283']"
+        index: 0
+        wait_for_element: true
+        timeout: 3.0
+        description: Открыть чат Fsdf
+      
+      - action: wait
+        duration: 0.5
+      
+      # Обработать сообщения от Fsdf
+      - action: repeat
+        times: 3
+        steps:
+        - action: selenium_extract
+          selector: ".bubble.is-in .translatable-message"
+          index: -1
+          save_to: last_message
+          save_previous_to: previous_message_1
+          skip_if_same: true
+          skip_empty: false
+          description: Извлечь сообщение от Fsdf
+        
+        - action: ai_generate
+          model: "{ai_model}"
+          prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+          max_tokens: 20
+          temperature: 0.8
+          save_to: reply_text
+          description: AI ответ
+        
+        - action: click
+          template: templates/telegram_input_field.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: selenium_type
+          selector: ".input-message-input[contenteditable='true']"
+          text: "{reply_text}"
+          interval: 0.1
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: click
+          template: templates/telegram_send_btn.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 1.0
+      
+      # ========== ЧЕЛОВЕК 2: Joker (7816070239) ==========
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='7816070239']"
+        index: 0
+        wait_for_element: true
+        timeout: 3.0
+        description: Открыть чат Joker
+      
+      - action: wait
+        duration: 0.5
+      
+      # Обработать сообщения от Joker
+      - action: repeat
+        times: 3
+        steps:
+        - action: selenium_extract
+          selector: ".bubble.is-in .translatable-message"
+          index: -1
+          save_to: last_message
+          save_previous_to: previous_message_2
+          skip_if_same: true
+          skip_empty: false
+          description: Извлечь сообщение от Joker
+        
+        - action: ai_generate
+          model: "{ai_model}"
+          prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+          max_tokens: 20
+          temperature: 0.8
+          save_to: reply_text
+          description: AI ответ
+        
+        - action: click
+          template: templates/telegram_input_field.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: selenium_type
+          selector: ".input-message-input[contenteditable='true']"
+          text: "{reply_text}"
+          interval: 0.1
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: click
+          template: templates/telegram_send_btn.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 1.0
+      
+      # ========== ЧЕЛОВЕК 3: Артем (924192692) ==========
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='924192692']"
+        index: 0
+        wait_for_element: true
+        timeout: 3.0
+        description: Открыть чат Артем
+      
+      - action: wait
+        duration: 0.5
+      
+      # Обработать сообщения от Артема
+      - action: repeat
+        times: 3
+        steps:
+        - action: selenium_extract
+          selector: ".bubble.is-in .translatable-message"
+          index: -1
+          save_to: last_message
+          save_previous_to: previous_message_3
+          skip_if_same: true
+          skip_empty: false
+          description: Извлечь сообщение от Артема
+        
+        - action: ai_generate
+          model: "{ai_model}"
+          prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+          max_tokens: 20
+          temperature: 0.8
+          save_to: reply_text
+          description: AI ответ
+        
+        - action: click
+          template: templates/telegram_input_field.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: selenium_type
+          selector: ".input-message-input[contenteditable='true']"
+          text: "{reply_text}"
+          interval: 0.1
+        
+        - action: wait
+          duration: 0.5
+        
+        - action: click
+          template: templates/telegram_send_btn.png
+          wait_for_appear: true
+          timeout: 3.0
+        
+        - action: wait
+          duration: 1.0
+      
+      # Пауза перед следующим циклом
+      - action: wait
+        duration: 5.0
+        description: Пауза перед следующей проверкой всех
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_tone: "дерзкий"

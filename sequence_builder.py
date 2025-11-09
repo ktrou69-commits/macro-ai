@@ -1135,6 +1135,7 @@ def main():
         print("2. ✏️  Редактировать существующую последовательность")
         print("3. 📋 Показать существующие последовательности")
         print("4. 📁 Показать доступные шаблоны")
+        print("5. 🧠 Selenium Helper (настройка извлечения текста)")
         print("0. 🚪 Выход")
         print("="*60)
         
@@ -1149,6 +1150,26 @@ def main():
             builder.list_sequences()
         elif choice == '4':
             builder.list_templates()
+        elif choice == '5':
+            # Selenium Helper
+            try:
+                from selenium_helper import SeleniumHelper
+                helper = SeleniumHelper()
+                step = helper.interactive_setup()
+                
+                if step:
+                    print("\n✅ Шаг создан! Скопируй YAML:")
+                    print("="*60)
+                    import yaml
+                    print(yaml.dump([step], default_flow_style=False, allow_unicode=True))
+                    print("="*60)
+                    input("\nНажми Enter чтобы продолжить...")
+                
+                helper.close()
+            except ImportError:
+                print("❌ selenium_helper.py не найден!")
+            except Exception as e:
+                print(f"❌ Ошибка: {e}")
         elif choice == '0':
             print("\n👋 До встречи!")
             break

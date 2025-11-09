@@ -1,0 +1,14 @@
+open ChromeApp
+wait 2s
+click ChromeNewTab
+wait 1s
+click ChromeSearchField
+wait 1s
+type "youtube.com"
+press enter
+wait 5s
+click Chrome-YouTube-SearchField
+wait 1s
+type "Python"
+press enter
+wait 3s

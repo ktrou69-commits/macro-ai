@@ -14,9 +14,15 @@ tqdm>=4.65.0
 pyyaml>=6.0
 pyperclip>=1.8.2
 pynput>=1.7.6
+watchdog>=3.0.0
 
 # AI & Selenium (for smart comments)
 selenium>=4.15.0
 webdriver-manager>=4.0.0
 easyocr>=1.7.0
 google-genai>=1.0.0
+python-dotenv>=1.0.0
+
+# CNN for Vision (Learning System)
+tensorflow>=2.20.0
+matplotlib>=3.10.0

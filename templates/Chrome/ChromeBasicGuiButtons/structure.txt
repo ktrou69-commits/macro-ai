@@ -1,0 +1,6 @@
+├── ChromeBasicGuiButtons/ - базовые кнопки Chrome
+│    ├── ChromeApp-btn.png              # Иконка запуска Chrome
+│    ├── ChromeNewTab-btn.png           # Кнопка "плюс" — открыть новую вкладку
+│    ├── ChromeSearchField-btn.png      # Поле ввода адреса/поиска
+│    ├── ChromeSearchSend-btn.png       # Кнопка/действие "Enter" (отправка запроса)
+│    ├── ChromeReload-btn.png           # Кнопка обновления страницы — перезагружает текущую вкладку

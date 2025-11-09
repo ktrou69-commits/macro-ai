@@ -1,0 +1,34 @@
+ ├── TikTok/                              # Вкладка TikTok
+ │    │
+ │    │    # ========================================
+ │    │    # VISION TEMPLATES (Template Matching)
+ │    │    # ========================================
+ │    │    ├── Chrome-TikTok-logo-btn.png      # Логотип TikTok — для обновления страницы
+ │    │    ├── Chrome-TikTok-Like-btn.png      # Кнопка лайка видео (Vision)
+ │    │    ├── Chrome-TikTok-Comment-btn.png   # Кнопка открытия комментариев
+ │    │    ├── Chrome-TikTok-Reply-btn.png     # Кнопка "Ответить" на комментарий
+ │    │    ├── Chrome-TikTok-CommentField-btn.png # Поле ввода комментария
+ │    │    ├── Chrome-TikTok-CommentSend-btn.png  # Кнопка отправки комментария
+ │    │    ├── Chrome-TikTok-Search-btn.png    # Кнопка поиска
+ │    │    ├── Chrome-TikTok-SearchField-btn.png # Поле ввода хештега или запроса
+ │    │    ├── Chrome-TikTok-ScrollDown-btn.png  # Скролл вниз для следующего видео
+ │    │    ├── Chrome-TikTok-ScrollUp-btn.png    # Скролл вверх для предыдущего видео
+ │    │    ├── Chrome-TikTok-CommentRegion-btn.png # Область комментария
+ │    │
+ │    │    # ========================================
+ │    │    # DOM SELECTORS (CSS Selectors)
+ │    │    # ========================================
+ │    │    # Chrome-TikTok-Like-dom
+ │    │    #   Selector: [data-e2e="like-icon"]
+ │    │    #   Type: span
+ │    │    #   Confidence: 95%
+ │    │    #   Description: Иконка лайка в TikTok
+ │    │    #   Method: DOM (быстро, надежно)
+ │    │    #   Fallback: Chrome-TikTok-Like-btn.png (Vision)
+ │    │    # Chrome-Tiktok-Comment-dom
+ │    │    #   Selector: [data-e2e="comment-icon"]
+ │    │    #   Type: span
+ │    │    #   Confidence: 95%
+ │    │    #   Description: Иконка комментария в TikTok
+ │    │    #   Method: DOM (быстро, надежно)
+ │    │    #   Fallback: Chrome-Tiktok-Comment-btn.png (Vision)

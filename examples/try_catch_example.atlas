@@ -1,0 +1,59 @@
+# Пример использования Try/Catch в DSL
+
+# Простой пример: попытка открыть Chrome
+try:
+    open ChromeApp
+    wait 2s
+    click ChromeNewTab
+catch:
+    log "Failed to open Chrome"
+    abort
+end
+
+# Пример с retry: попытка кликнуть с повторами
+try:
+    click Chrome-TikTok-Like
+    wait 1.5s
+catch:
+    log "Like button not found, retrying..."
+    wait 2s
+    click Chrome-TikTok-Like
+end
+
+# Сложный пример: открытие TikTok с fallback
+try:
+    # Попытка открыть через адресную строку
+    click ChromeSearchField
+    wait 1s
+    type "tiktok.com"
+    press enter
+    wait 5s
+catch:
+    # Fallback: открыть новую вкладку и попробовать снова
+    log "Failed to open TikTok, trying with new tab..."
+    click ChromeNewTab
+    wait 1s
+    click ChromeSearchField
+    wait 1s
+    type "tiktok.com"
+    press enter
+    wait 5s
+end
+
+# Пример с вложенными try/catch
+try:
+    click Chrome-TikTok-Search
+    wait 1s
+    
+    try:
+        click Chrome-TikTok-SearchField
+        wait 1s
+        type "#trending"
+    catch:
+        log "Search field not found"
+        abort
+    end
+catch:
+    log "Search button not found"
+    abort
+end

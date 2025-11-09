@@ -1,0 +1,9 @@
+try:
+    open ChromeApp
+    wait 2s
+    click ChromeNewTab
+    wait 1s
+catch:
+    log "Failed to open Chrome or create a new tab."
+    abort
+end

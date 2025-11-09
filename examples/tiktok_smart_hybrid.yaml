@@ -39,46 +39,51 @@ sequences:
       description: Обработать комментарии
       steps:
       
-      # 3.1. Selenium: Извлечь текст КОНКРЕТНОГО комментария
+      # 3.1. Selenium: Извлечь текст КОНКРЕТНОГО комментария (пропуская пустые)
       - action: selenium_extract
-        selector: "[class*='comment-sidebar'] [data-e2e='comment-level-1']"
-        index: "{comment_index}"  # Какой комментарий (0, 1, 2...)
+        selector: "[data-e2e='comment-level-1']"
+        index: "{comment_index}"  # Начальный индекс (0, 1, 2...)
         save_to: comment_text
-        description: Прочитать комментарий #{comment_index}
+        save_index_to: found_index  # Сохранить реальный индекс найденного комментария
+        skip_empty: true  # Пропускать пустые (картинки)
+        max_attempts: 20  # Максимум попыток (увеличено)
+        description: Найти комментарий с текстом (пропуская картинки)
       
       # 3.2. AI: Сгенерировать ответ
       - action: ai_generate
         model: "{ai_model}"
-        prompt: "Напиши {reply_tone} ответ на комментарий TikTok (максимум 50 символов): {comment_text}"
-        max_tokens: 50
-        temperature: 0.7
+        prompt: "Напиши ОДИН короткий {reply_tone} ответ на этот комментарий TikTok. Максимум 50 символов. Только текст ответа, без вариантов и пояснений: {comment_text}"
+        max_tokens: 30
+        temperature: 0.8
         save_to: reply_text
         description: Сгенерировать ответ через Gemini
       
-      # 3.3. Selenium: Получить координаты кнопки "Ответить" ЭТОГО комментария
+      # 3.3. Selenium: Получить координаты найденного комментария
       - action: selenium_get_coordinates
-        selector: "[class*='comment-sidebar'] [data-e2e='comment-level-1']:nth-child({comment_index}) button[aria-label*='Reply']"
-        index: 0
-        save_x: reply_button_x
-        save_y: reply_button_y
-        description: Получить координаты кнопки "Ответить"
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"  # Используем реальный индекс найденного контейнера
+        save_x: comment_x
+        save_y: comment_y
+        description: Получить координаты контейнера найденного комментария
       
-      # 3.4. PyAutoGUI: Кликнуть по координатам (эмуляция пользователя!)
-      - action: click
-        position: absolute
-        x: "{reply_button_x}"
-        y: "{reply_button_y}"
-        description: Кликнуть "Ответить" (эмуляция)
+      # 3.4. Selenium: Найти кнопку "Ответить" в родителе контейнера
+      - action: selenium_click
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"
+        parent_selector: ".."
+        child_selector: "span[data-e2e*='comment-reply']"
+        description: Первый клик "Ответить" через Selenium
       
       - action: wait
         duration: 0.5
       
-      # 3.5. Двойной клик для надежности
-      - action: click
-        position: absolute
-        x: "{reply_button_x}"
-        y: "{reply_button_y}"
-        description: Второй клик (открыть поле ответа)
+      # 3.5. Второй клик для открытия поля ответа
+      - action: selenium_click
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"
+        parent_selector: ".."
+        child_selector: "span[data-e2e*='comment-reply']"
+        description: Второй клик "Ответить" (открыть поле ответа)
       
       - action: wait
         duration: 1.0

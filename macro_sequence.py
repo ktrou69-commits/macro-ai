@@ -25,6 +25,7 @@ try:
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.common.action_chains import ActionChains
     from webdriver_manager.chrome import ChromeDriverManager
     SELENIUM_AVAILABLE = True
 except ImportError:
@@ -36,7 +37,23 @@ try:
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
-    print("⚠️  EasyOCR не установлен. Установи: pip install easyocr")
+    print("⚠️  EasyOCR не установлен. OCR функции недоступны.")
+
+# Learning System
+try:
+    from learning import LearningSystem
+    LEARNING_AVAILABLE = True
+except ImportError:
+    LEARNING_AVAILABLE = False
+    print("⚠️  Learning System не установлен. Обучение недоступно.")
+
+# CNN Detector
+try:
+    from learning.cnn_detector import CNNDetector
+    CNN_AVAILABLE = True
+except ImportError:
+    CNN_AVAILABLE = False
+    print("⚠️  CNN Detector недоступен (нужен TensorFlow)")
 
 try:
     from google import genai
@@ -46,7 +63,7 @@ except ImportError:
     print("⚠️  Gemini API не установлен. Установи: pip install google-genai")
 
 # Настройки
-DEFAULT_THRESHOLD = 0.86
+DEFAULT_THRESHOLD = 0.75  # Понижен с 0.86 для лучшего поиска
 DEFAULT_INTERVAL = 0.5
 USE_GRAYSCALE = True
 
@@ -76,30 +93,72 @@ class MacroRunner:
         self.ocr_reader = None  # EasyOCR reader
         self.ai_model = None  # Gemini AI model
         
+        # Learning System
+        self.learning_enabled = True  # Включить обучение
+        self.learning_system = None
+        
+        # CNN Detector
+        self.cnn_enabled = True  # Включить CNN детектор
+        self.cnn_detector = None
+        
+        # Execution Tracking
+        self.execution_state = {
+            'sequence_name': '',
+            'completed_steps': [],
+            'failed_step': None,
+            'screenshots': []
+        }
+        
         self._detect_display_scale()
         self._load_config()
         self._load_templates_library()
         self._load_variables()
+        self._init_learning_system()
+        self._init_cnn_detector()
     
     def _detect_display_scale(self):
         """Определение Retina scale"""
         screen_size = pyautogui.size()
         screenshot = pyautogui.screenshot()
         
+        # PyAutoGUI уже возвращает физическое разрешение
+        # Поэтому НЕ нужно масштабировать шаблоны
+        # Но нужно корректировать координаты для pyautogui.click()
         if screenshot.width != screen_size.width:
             self.display_scale = screenshot.width / screen_size.width
             print(f"🖥️  Retina Display обнаружен (scale: {self.display_scale}x)")
+            print(f"   📐 Логическое разрешение: {screen_size.width}x{screen_size.height}")
+            print(f"   📐 Физическое разрешение: {screenshot.width}x{screenshot.height}")
+        else:
+            self.display_scale = 1.0
     
     def _load_config(self):
-        """Загрузка конфига"""
+        """Загрузка конфига (YAML или DSL .atlas)"""
         if not os.path.exists(self.config_path):
             print(f"❌ Конфиг не найден: {self.config_path}")
             self.config = {'sequences': {}, 'settings': {}}
             return
         
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                self.config = yaml.safe_load(f) or {'sequences': {}, 'settings': {}}
+            # Проверяем расширение файла
+            if self.config_path.endswith('.atlas'):
+                # DSL формат - конвертируем в YAML
+                print(f"🔄 Обнаружен DSL формат (.atlas)")
+                from atlas_dsl_parser import AtlasDSLParser
+                parser = AtlasDSLParser()
+                parsed = parser.parse_file(self.config_path)
+                
+                # Создаем структуру конфига
+                sequence_name = Path(self.config_path).stem
+                self.config = {
+                    'sequences': {sequence_name: parsed},
+                    'settings': {}
+                }
+                print(f"✅ DSL конвертирован: {sequence_name}")
+            else:
+                # Обычный YAML
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    self.config = yaml.safe_load(f) or {'sequences': {}, 'settings': {}}
             
             sequences = self.config.get('sequences', {})
             print(f"✅ Загружено последовательностей: {len(sequences)}")
@@ -130,6 +189,41 @@ class MacroRunner:
             for key, value in self.variables.items():
                 print(f"   {key} = {value}")
     
+    def _init_learning_system(self):
+        """Инициализация системы обучения"""
+        if not LEARNING_AVAILABLE:
+            self.learning_enabled = False
+            return
+        
+        if self.learning_enabled:
+            try:
+                self.learning_system = LearningSystem(
+                    db_path="learning/memory.db",
+                    retrain_threshold=100
+                )
+                print("🧠 Learning System активирована")
+            except Exception as e:
+                print(f"⚠️  Ошибка инициализации Learning System: {e}")
+                self.learning_enabled = False
+    
+    def _init_cnn_detector(self):
+        """Инициализация CNN детектора"""
+        if not CNN_AVAILABLE:
+            self.cnn_enabled = False
+            return
+        
+        if self.cnn_enabled:
+            try:
+                self.cnn_detector = CNNDetector(models_dir="learning/models/cnn")
+                available_models = self.cnn_detector.get_available_models()
+                if available_models:
+                    print(f"🧠 CNN Detector активирован ({len(available_models)} моделей)")
+                else:
+                    print("⚠️  CNN Detector активирован (нет обученных моделей)")
+            except Exception as e:
+                print(f"⚠️  Ошибка инициализации CNN Detector: {e}")
+                self.cnn_enabled = False
+    
     def _resolve_variable(self, value):
         """Разрешение переменных вида ${var_name}"""
         if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
@@ -151,6 +245,9 @@ class MacroRunner:
         if template is None:
             print(f"❌ Не удалось загрузить: {template_path}")
             return None
+        
+        # НЕ масштабируем шаблон, так как PyAutoGUI уже возвращает физическое разрешение
+        # Шаблоны должны быть созданы в физическом разрешении (Retina)
         
         self.templates[template_path] = template
         print(f"📥 Загружен шаблон: {Path(template_path).name} ({template.shape[1]}x{template.shape[0]})")
@@ -180,7 +277,8 @@ class MacroRunner:
         for pt in zip(*locations[::-1]):  # Switch x and y
             score = res[pt[1], pt[0]]
             
-            # Центр на физическом разрешении
+            # Координаты центра в физическом разрешении
+            # Делим на scale для pyautogui.click() (который работает в логическом разрешении)
             center_x = int((pt[0] + w / 2) / self.display_scale)
             center_y = int((pt[1] + h / 2) / self.display_scale)
             
@@ -210,6 +308,13 @@ class MacroRunner:
     
     def _find_template(self, template_path: str, threshold: float = DEFAULT_THRESHOLD, index: int = 0) -> Tuple[bool, Optional[Tuple[int, int]], float]:
         """Поиск шаблона на экране (с поддержкой выбора конкретного совпадения)"""
+        # Конвертировать index в int если это строка
+        if isinstance(index, str):
+            try:
+                index = int(index)
+            except ValueError:
+                index = 0
+        
         # Найти все совпадения
         matches = self._find_all_templates(template_path, threshold)
         
@@ -227,6 +332,94 @@ class MacroRunner:
             print(f"ℹ️  Найдено {len(matches)} совпадений, выбрано #{index + 1}")
         
         return True, match['coords'], match['score']
+    
+    def _find_template_with_cnn(self, template_path: str, threshold: float = 0.8) -> Tuple[bool, Optional[Tuple[int, int]], float]:
+        """
+        Поиск с использованием CNN (если модель доступна)
+        
+        Args:
+            template_path: Путь к шаблону
+            threshold: Порог уверенности (0-1)
+            
+        Returns:
+            (найдено, координаты, уверенность)
+        """
+        if not self.cnn_enabled or not self.cnn_detector:
+            # Fallback на template matching
+            return self._find_template_old(template_path, threshold=DEFAULT_THRESHOLD)
+        
+        # Проверяем доступность модели
+        if not self.cnn_detector.is_model_available(template_path):
+            # Модель не обучена, используем template matching
+            return self._find_template_old(template_path, threshold=DEFAULT_THRESHOLD)
+        
+        # Захват экрана
+        screenshot = pyautogui.screenshot()
+        frame = np.array(screenshot)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        
+        # CNN детекция
+        try:
+            found, location, confidence = self.cnn_detector.detect_fast(
+                frame, 
+                template_path, 
+                threshold=threshold
+            )
+            
+            if found:
+                # Корректируем координаты для Retina
+                center_x = int(location[0] / self.display_scale)
+                center_y = int(location[1] / self.display_scale)
+                
+                self.stats['successful_finds'] += 1
+                
+                # Запись успеха в Learning System
+                if self.learning_enabled and self.learning_system:
+                    # Вырезаем область для записи
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    x, y = location
+                    region_size = 64  # Размер окна CNN
+                    x1 = max(0, x - region_size // 2)
+                    y1 = max(0, y - region_size // 2)
+                    x2 = min(gray.shape[1], x + region_size // 2)
+                    y2 = min(gray.shape[0], y + region_size // 2)
+                    
+                    region_screenshot = gray[y1:y2, x1:x2]
+                    self.learning_system.record_success(
+                        template_id=template_path,
+                        screenshot=region_screenshot,
+                        region=(x1, y1, x2-x1, y2-y1),
+                        method="cnn"
+                    )
+                
+                return True, (center_x, center_y), confidence
+            else:
+                self.stats['failed_finds'] += 1
+                
+                # Запись неудачи
+                if self.learning_enabled and self.learning_system:
+                    last_success = self.learning_system.db.get_last_success(template_path)
+                    if last_success and last_success['region']:
+                        region = last_success['region']
+                        x, y, w, h = region
+                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        if y + h <= gray.shape[0] and x + w <= gray.shape[1]:
+                            region_screenshot = gray[y:y+h, x:x+w]
+                            self.learning_system.record_failure(
+                                template_id=template_path,
+                                screenshot=region_screenshot,
+                                region=region,
+                                method="cnn",
+                                context=f"CNN not found, confidence: {confidence:.2f}"
+                            )
+                
+                # Fallback на template matching
+                print(f"   ⚠️  CNN не нашел (confidence: {confidence:.2f}), пробуем template matching...")
+                return self._find_template_old(template_path, threshold=DEFAULT_THRESHOLD)
+                
+        except Exception as e:
+            print(f"   ⚠️  Ошибка CNN детекции: {e}, fallback на template matching")
+            return self._find_template_old(template_path, threshold=DEFAULT_THRESHOLD)
     
     def _find_template_old(self, template_path: str, threshold: float = DEFAULT_THRESHOLD) -> Tuple[bool, Optional[Tuple[int, int]], float]:
         """Старый метод поиска (одно лучшее совпадение)"""
@@ -253,9 +446,39 @@ class MacroRunner:
             center_y = int((top_left[1] + h // 2) / self.display_scale)
             
             self.stats['successful_finds'] += 1
+            
+            # Запись успеха в Learning System
+            if self.learning_enabled and self.learning_system:
+                region_screenshot = gray[top_left[1]:top_left[1]+h, top_left[0]:top_left[0]+w]
+                self.learning_system.record_success(
+                    template_id=template_path,
+                    screenshot=region_screenshot,
+                    region=(top_left[0], top_left[1], w, h),
+                    method="template_match"
+                )
+            
             return True, (center_x, center_y), max_val
         
         self.stats['failed_finds'] += 1
+        
+        # Запись неудачи в Learning System
+        if self.learning_enabled and self.learning_system:
+            # Пытаемся найти область где искали (последняя успешная позиция)
+            last_success = self.learning_system.db.get_last_success(template_path)
+            if last_success and last_success['region']:
+                region = last_success['region']
+                x, y, w, h = region
+                # Делаем скриншот этой области
+                if y + h <= gray.shape[0] and x + w <= gray.shape[1]:
+                    region_screenshot = gray[y:y+h, x:x+w]
+                    self.learning_system.record_failure(
+                        template_id=template_path,
+                        screenshot=region_screenshot,
+                        region=region,
+                        method="template_match",
+                        context=f"Template not found, score: {max_val:.2f}"
+                    )
+        
         return False, None, max_val
     
     def _perform_click(self, x: int, y: int, clicks: int = 1, interval: float = 0.1):
@@ -271,6 +494,11 @@ class MacroRunner:
     def _execute_step(self, step: dict) -> bool:
         """Выполнение одного шага"""
         action = step.get('action')
+        
+        # Проверка флага пропуска (кроме selenium_extract)
+        if action != 'selenium_extract' and self.variables.get('_skip_steps', False):
+            print(f"   ⏭️  Пропущен шаг: {action}")
+            return True  # Продолжить, но пропустить
         
         # REPEAT - повторение вложенных шагов
         if action == 'repeat':
@@ -349,6 +577,12 @@ class MacroRunner:
             wait_for_appear = step.get('wait_for_appear', False)
             timeout = step.get('timeout', 5.0)
             
+            # Поддержка custom threshold
+            threshold = step.get('threshold', DEFAULT_THRESHOLD)
+            
+            # По умолчанию всегда ждем 10 секунд перед ошибкой
+            default_retry_timeout = 10.0
+            
             found = False
             coords = None
             score = 0.0
@@ -357,11 +591,11 @@ class MacroRunner:
             # Попробовать каждый шаблон из списка
             for tmpl in template_list:
                 if wait_for_appear:
-                    print(f"⏳ Ожидание появления шаблона (timeout: {timeout}с)...")
+                    print(f"⏳ Ожидание появления шаблона (timeout: {timeout}с, threshold: {threshold})...")
                     start_time = time.time()
                     
                     while time.time() - start_time < timeout:
-                        found, coords, score = self._find_template(tmpl, index=index)
+                        found, coords, score = self._find_template(tmpl, threshold=threshold, index=index)
                         if found:
                             used_template = tmpl
                             break
@@ -370,9 +604,18 @@ class MacroRunner:
                     if found:
                         break
                 else:
-                    found, coords, score = self._find_template(tmpl, index=index)
+                    # Повторяем поиск в течение 10 секунд
+                    print(f"🔍 Поиск шаблона (макс. {default_retry_timeout}с, threshold: {threshold})...")
+                    start_time = time.time()
+                    
+                    while time.time() - start_time < default_retry_timeout:
+                        found, coords, score = self._find_template(tmpl, threshold=threshold, index=index)
+                        if found:
+                            used_template = tmpl
+                            break
+                        time.sleep(0.5)
+                    
                     if found:
-                        used_template = tmpl
                         break
             
             if not found:
@@ -397,6 +640,10 @@ class MacroRunner:
         # TYPE
         elif action == 'type':
             text = step.get('text', '')
+            
+            # Подставить переменные
+            text = text.format(**self.variables)
+            
             # Проверка на кириллицу
             has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in text)
             
@@ -517,6 +764,12 @@ class MacroRunner:
             
             if browser == 'chrome':
                 options = webdriver.ChromeOptions()
+                
+                # Путь к Chrome на macOS
+                chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+                if os.path.exists(chrome_path):
+                    options.binary_location = chrome_path
+                
                 if headless:
                     options.add_argument('--headless')
                 options.add_argument('--no-sandbox')
@@ -552,8 +805,26 @@ class MacroRunner:
                 options = webdriver.ChromeOptions()
                 options.add_experimental_option("debuggerAddress", debugger_address)
                 
-                service = Service(ChromeDriverManager().install())
+                # Попробовать использовать уже скачанный ChromeDriver
+                chromedriver_path = "/tmp/chromedriver_temp/chromedriver-mac-arm64/chromedriver"
+                
+                if os.path.exists(chromedriver_path):
+                    print(f"   ✅ Используем скачанный ChromeDriver: {chromedriver_path}")
+                    service = Service(chromedriver_path)
+                else:
+                    print(f"   ⚠️  Скачиваем ChromeDriver через webdriver-manager...")
+                    service = Service(ChromeDriverManager().install())
+                
                 self.driver = webdriver.Chrome(service=service, options=options)
+            
+            # Переключаемся на последнюю вкладку (обычно активную)
+            try:
+                handles = self.driver.window_handles
+                if len(handles) > 0:
+                    self.driver.switch_to.window(handles[-1])
+                    print(f"   ✅ Переключено на вкладку: {self.driver.title[:50]}...")
+            except:
+                pass
             
             print("✅ Selenium подключен к существующему браузеру")
             return True
@@ -561,6 +832,7 @@ class MacroRunner:
         except Exception as e:
             print(f"❌ Ошибка подключения: {e}")
             print("💡 Убедись что Chrome запущен с --remote-debugging-port=9222")
+            print("💡 Или запусти: python3 tests/test_selenium_alt.py (скачает правильный ChromeDriver)")
             return False
     
     def _selenium_navigate(self, step: dict) -> bool:
@@ -625,9 +897,24 @@ class MacroRunner:
         
         selector = step.get('selector')
         index = step.get('index', 0)
+
+        # Конвертировать index в int если это строка
+        if isinstance(index, str):
+            try:
+                index = int(index)
+            except ValueError:
+                index = 0
+        
         save_to = step.get('save_to')
+        save_index_to = step.get('save_index_to')  # Сохранить найденный индекс
+        save_previous_to = step.get('save_previous_to')  # Сохранить предыдущее значение
+        skip_if_same = step.get('skip_if_same', False)  # Пропустить если совпадает с предыдущим
         wait_for_element = step.get('wait_for_element', True)
         timeout = step.get('timeout', 10.0)
+        skip_empty = step.get('skip_empty', True)  # Пропускать пустые комментарии
+        max_attempts = step.get('max_attempts', 10)  # Максимум попыток
+        extract_all = step.get('extract_all', False)  # Извлечь все элементы
+        save_all_to = step.get('save_all_to')  # Сохранить все в список
         
         try:
             if wait_for_element:
@@ -640,21 +927,109 @@ class MacroRunner:
                 print(f"❌ Элемент не найден: {selector}")
                 return False
             
-            if index >= len(elements):
-                print(f"⚠️  Индекс {index} вне диапазона (найдено {len(elements)} элементов)")
-                index = 0
+            print(f"📊 Найдено элементов: {len(elements)}")
             
-            element = elements[index]
-            text = element.text
-            
-            if text and save_to:
-                self.variables[save_to] = text
-                print(f"✅ Selenium: извлечено {len(text)} символов")
-                print(f"📝 Текст: {text[:100]}...")
+            # Если extract_all=True, извлечь все элементы
+            if extract_all:
+                all_texts = []
+                for elem in elements:
+                    text = elem.text.strip()
+                    if text and len(text) > 5:
+                        all_texts.append(text)
+                
+                if save_all_to:
+                    self.variables[save_all_to] = all_texts
+                
+                print(f"✅ Selenium: извлечено {len(all_texts)} элементов")
+                for i, text in enumerate(all_texts[:5]):
+                    print(f"   [{i}] {text[:60]}...")
+                
+                if len(all_texts) > 5:
+                    print(f"   ... и еще {len(all_texts) - 5}")
+                
                 return True
-            else:
-                print("⚠️  Текст пустой")
+            
+            # Если skip_empty=True, ищем первый непустой комментарий
+            elif skip_empty:
+                original_index = index
+                attempts = 0
+                
+                while attempts < max_attempts:
+                    if index >= len(elements):
+                        print(f"⚠️  Достигнут конец списка (всего {len(elements)} элементов)")
+                        return False
+                    
+                    element = elements[index]
+                    text = element.text.strip()
+                    
+                    # Фильтруем служебные тексты
+                    skip_words = ["Комментарии", "Ответить", "Нравится", "Добавить", "Показать", "Просмотреть"]
+                    is_service_text = any(word in text for word in skip_words)
+                    
+                    if text and len(text) > 5 and not is_service_text:
+                        # Нашли комментарий с текстом!
+                        if index != original_index:
+                            print(f"⏭️  Пропущено комментариев: {index - original_index}")
+                        
+                        if save_to:
+                            self.variables[save_to] = text
+                        
+                        if save_index_to:
+                            self.variables[save_index_to] = index
+                        
+                        print(f"✅ Selenium: извлечено {len(text)} символов (индекс: {index})")
+                        print(f"📝 Текст: {text[:100]}...")
+                        return True
+                    else:
+                        if not text:
+                            print(f"   ⏭️  Индекс {index}: пустой (возможно картинка)")
+                        else:
+                            print(f"   ⏭️  Индекс {index}: служебный текст ({text[:30]}...)")
+                        
+                        index += 1
+                        attempts += 1
+                
+                print(f"❌ Не найдено комментариев с текстом (проверено {attempts} элементов)")
                 return False
+            
+            else:
+                # Обычный режим (без пропуска пустых)
+                if index >= len(elements):
+                    print(f"⚠️  Индекс {index} вне диапазона (найдено {len(elements)} элементов)")
+                    index = 0
+                
+                element = elements[index]
+                text = element.text
+                
+                if text and save_to:
+                    # Проверка на совпадение с предыдущим
+                    if skip_if_same and save_previous_to:
+                        previous_text = self.variables.get(save_previous_to, '')
+                        if text == previous_text:
+                            print(f"⏭️  Нет новых сообщений (текст совпадает)")
+                            print(f"⏸️  Пауза 10 секунд перед следующей проверкой...")
+                            # Установить флаг для пропуска остальных шагов
+                            self.variables['_skip_steps'] = True
+                            time.sleep(10)
+                            return True  # Продолжить цикл, но пропустить шаги
+                        else:
+                            print(f"✅ Новое сообщение обнаружено!")
+                            # Сохранить текущее как предыдущее
+                            self.variables[save_previous_to] = text
+                            # Сбросить флаг пропуска
+                            self.variables['_skip_steps'] = False
+                    
+                    self.variables[save_to] = text
+                    
+                    if save_index_to:
+                        self.variables[save_index_to] = index
+                    
+                    print(f"✅ Selenium: извлечено {len(text)} символов")
+                    print(f"📝 Текст: {text[:100]}...")
+                    return True
+                else:
+                    print("❌ Текст пустой")
+                    return False
             
         except Exception as e:
             print(f"❌ Ошибка извлечения: {e}")
@@ -668,6 +1043,15 @@ class MacroRunner:
         
         selector = step.get('selector')
         index = step.get('index', 0)
+        parent_selector = step.get('parent_selector')  # Найти родителя
+        
+        # Конвертировать index в int если это строка
+        if isinstance(index, str):
+            try:
+                index = int(index)
+            except ValueError:
+                index = 0
+        
         save_x = step.get('save_x', 'element_x')
         save_y = step.get('save_y', 'element_y')
         
@@ -682,6 +1066,15 @@ class MacroRunner:
                 index = 0
             
             element = elements[index]
+            
+            # Если нужен родительский элемент
+            if parent_selector:
+                try:
+                    parent = element.find_element(By.XPATH, f"./ancestor::{parent_selector}")
+                    element = parent
+                    print(f"   ✅ Найден родитель: {parent_selector}")
+                except:
+                    print(f"   ⚠️  Родитель не найден, используем исходный элемент")
             
             # Получить координаты и размер
             location = element.location
@@ -711,7 +1104,17 @@ class MacroRunner:
             return False
         
         selector = step.get('selector')
+        index = step.get('index', 0)
         element = step.get('element')  # или сохраненный элемент
+        parent_selector = step.get('parent_selector')  # Селектор родителя
+        child_selector = step.get('child_selector')  # Селектор дочернего элемента
+        
+        # Конвертировать index в int если это строка
+        if isinstance(index, str):
+            try:
+                index = int(index)
+            except ValueError:
+                index = 0
         
         try:
             if element and isinstance(element, str):
@@ -719,10 +1122,129 @@ class MacroRunner:
                 elem = self.variables.get(element)
             else:
                 # Ищем по селектору
-                elem = self.driver.find_element(By.CSS_SELECTOR, selector)
+                elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                
+                if not elements:
+                    print(f"❌ Элемент не найден: {selector}")
+                    return False
+                
+                print(f"   🔍 Найдено элементов: {len(elements)}")
+                
+                # Если index не указан, ищем видимый элемент в viewport
+                if index == 0 and len(elements) > 1:
+                    print(f"   👁️  Ищем видимый элемент в viewport...")
+                    visible_elem = None
+                    for i, el in enumerate(elements):
+                        try:
+                            # Проверяем видимость в viewport
+                            is_visible = self.driver.execute_script("""
+                                var elem = arguments[0];
+                                var rect = elem.getBoundingClientRect();
+                                var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+                                var windowWidth = window.innerWidth || document.documentElement.clientWidth;
+                                
+                                // Элемент в центре экрана (±30% от центра)
+                                var centerY = windowHeight / 2;
+                                var elemCenterY = rect.top + rect.height / 2;
+                                var distanceFromCenter = Math.abs(elemCenterY - centerY);
+                                
+                                return distanceFromCenter < windowHeight * 0.3;
+                            """, el)
+                            
+                            if is_visible:
+                                visible_elem = el
+                                print(f"   ✅ Найден видимый элемент #{i}")
+                                break
+                        except:
+                            continue
+                    
+                    if visible_elem:
+                        elem = visible_elem
+                    else:
+                        print(f"   ⚠️  Видимый элемент не найден, используем #{index}")
+                        elem = elements[index]
+                else:
+                    if index >= len(elements):
+                        print(f"⚠️  Индекс {index} вне диапазона (найдено {len(elements)} элементов)")
+                        index = 0
+                    
+                    elem = elements[index]
+                
+                # Если нужен родительский элемент
+                if parent_selector:
+                    try:
+                        elem = elem.find_element(By.XPATH, parent_selector)
+                        print(f"   ✅ Найден родитель: {parent_selector}")
+                    except:
+                        print(f"   ⚠️  Родитель не найден: {parent_selector}")
+                        return False
+                
+                # Если нужен дочерний элемент
+                if child_selector:
+                    try:
+                        elem = elem.find_element(By.CSS_SELECTOR, child_selector)
+                        print(f"   ✅ Найден дочерний элемент: {child_selector}")
+                    except:
+                        print(f"   ⚠️  Дочерний элемент не найден: {child_selector}")
+                        return False
             
-            elem.click()
-            print(f"🖱️  Selenium клик: {selector}")
+            # Человекоподобное поведение
+            humanlike = step.get('humanlike', False)  # По умолчанию ВЫКЛЮЧЕНО (только Selenium)
+            
+            if humanlike:
+                print(f"   🤖 Humanlike режим активирован")
+                
+                # 1. Прокрутка к элементу (если нужно)
+                print(f"   📜 Прокрутка к элементу...")
+                self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", elem)
+                delay1 = 0.1 + np.random.uniform(0, 0.2)
+                print(f"   ⏱️  Пауза {delay1:.2f}s")
+                time.sleep(delay1)
+                
+                # 2. Получаем координаты элемента на экране
+                print(f"   📍 Получение координат элемента...")
+                try:
+                    # Координаты в браузере
+                    location = elem.location
+                    size = elem.size
+                    
+                    # Координаты окна браузера
+                    window_pos = self.driver.get_window_position()
+                    
+                    # Центр элемента на экране
+                    elem_x = window_pos['x'] + location['x'] + size['width'] / 2
+                    elem_y = window_pos['y'] + location['y'] + size['height'] / 2 + 80  # +80 для toolbar
+                    
+                    print(f"   🎯 Координаты: ({int(elem_x)}, {int(elem_y)})")
+                    
+                    # 3. Плавное движение РЕАЛЬНОГО курсора
+                    print(f"   🖱️  Движение РЕАЛЬНОГО курсора...")
+                    current_x, current_y = pyautogui.position()
+                    
+                    # Плавное движение с случайной траекторией
+                    duration = 0.3 + np.random.uniform(0, 0.2)
+                    pyautogui.moveTo(elem_x, elem_y, duration=duration, tween=pyautogui.easeInOutQuad)
+                    
+                    # 4. Пауза после наведения
+                    delay2 = 0.15 + np.random.uniform(0, 0.15)
+                    print(f"   ⏱️  Hover пауза {delay2:.2f}s")
+                    time.sleep(delay2)
+                    
+                    # 5. Клик через Selenium (DOM)
+                    print(f"   👆 Клик через DOM...")
+                    elem.click()
+                    print(f"✅ Selenium клик выполнен (humanlike + real mouse)")
+                    
+                except Exception as e:
+                    print(f"   ⚠️  Ошибка humanlike: {e}")
+                    print(f"   ↩️  Откат на обычный клик...")
+                    elem.click()
+                    print(f"✅ Selenium клик выполнен (fallback)")
+            else:
+                # Обычный клик без имитации
+                elem.click()
+                print(f"🖱️  Selenium клик выполнен")
+            
             return True
             
         except Exception as e:
@@ -737,6 +1259,7 @@ class MacroRunner:
         
         selector = step.get('selector')
         text = step.get('text', '')
+        interval = step.get('interval', 0)  # Интервал между символами (для имитации печати)
         
         # Подставляем переменные
         text = text.format(**self.variables)
@@ -744,8 +1267,18 @@ class MacroRunner:
         try:
             elem = self.driver.find_element(By.CSS_SELECTOR, selector)
             elem.clear()
-            elem.send_keys(text)
-            print(f"⌨️  Selenium ввод: {text[:50]}...")
+            
+            # Если interval > 0 - печатать посимвольно (имитация)
+            if interval > 0:
+                print(f"⌨️  Selenium печать (имитация): {text[:50]}...")
+                for char in text:
+                    elem.send_keys(char)
+                    time.sleep(interval)
+            else:
+                # Обычный ввод
+                elem.send_keys(text)
+                print(f"⌨️  Selenium ввод: {text[:50]}...")
+            
             return True
             
         except Exception as e:
@@ -953,6 +1486,14 @@ class MacroRunner:
         sequence = sequences[sequence_name]
         steps = sequence.get('steps', [])
         
+        # Инициализация состояния выполнения
+        self.execution_state = {
+            'sequence_name': sequence_name,
+            'completed_steps': [],
+            'failed_step': None,
+            'screenshots': []
+        }
+        
         # Вывод метаданных
         print("\n" + "="*60)
         print(f"🚀 Запуск: {sequence_name}")
@@ -984,7 +1525,21 @@ class MacroRunner:
             
             print(f"\n📍 Шаг {i}/{len(steps)}: {desc}")
             
-            if not self._execute_step(step):
+            success = self._execute_step(step)
+            
+            # Записываем результат
+            step_record = {
+                **step,
+                'index': i,
+                'success': success,
+                'description': desc
+            }
+            
+            if success:
+                self.execution_state['completed_steps'].append(step_record)
+            else:
+                step_record['error'] = f"Шаг {i} не выполнен"
+                self.execution_state['failed_step'] = step_record
                 print(f"❌ Шаг {i} не выполнен")
                 return False
         
@@ -999,8 +1554,7 @@ class MacroRunner:
         print("="*60 + "\n")
         
         return True
-
-
+    
 def main():
     parser = argparse.ArgumentParser(description='Macro AI - Запуск последовательностей')
     parser.add_argument('--config', type=str, default='my_sequences.yaml', help='Путь к конфигу')

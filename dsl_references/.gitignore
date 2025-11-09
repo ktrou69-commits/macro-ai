@@ -1,0 +1,5 @@
+# DSL Reference files
+*.txt
+
+# Except README
+!README.md

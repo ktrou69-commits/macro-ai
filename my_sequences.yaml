@@ -221,4 +221,11 @@ sequences:
     tags:
     - tiktok
     - atlas
+  test:
+    name: test
+    steps:
+    - action: click
+      template: /Users/kostya/Desktop/local-macros/templates/Chrome-logo-btn.png
+      clicks: 1
+    repeat: 2
 settings: {}
