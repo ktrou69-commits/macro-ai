@@ -84,6 +84,13 @@ case $TEST_TYPE in
     echo "${BLUE}🤖 7. Тесты Gemini API${NC}"
     python3 tests/test_gemini.py
     echo ""
+    
+    # Новые тесты (критические модули)
+    echo "${BLUE}🎮 8. Тесты новых модулей${NC}"
+    python3 tests/test_simulator.py
+    python3 tests/test_parallel_runner.py
+    python3 tests/test_dom_selector_tool.py
+    echo ""
     ;;
     
   *)
