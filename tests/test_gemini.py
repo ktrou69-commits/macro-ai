@@ -2,17 +2,29 @@
 """
 Тест Gemini API (новый SDK)
 """
-import os
+import sys
+from pathlib import Path
+
+# Добавляем корень проекта в путь
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from google import genai
+    from utils.api_config import APIConfig
     
     print("🤖 Тест Gemini API (новый SDK)")
     print()
     
-    # API ключ из переменной окружения
-    # Клиент автоматически подхватит GEMINI_API_KEY
-    client = genai.Client(api_key=os.getenv('GEMINI_API_KEY', 'AIzaSyBGlFjt6bKJLJqcsavArM6wb7voH111gc8'))
+    # API ключ из .env через централизованную конфигурацию
+    config = APIConfig()
+    
+    if not config.has_gemini():
+        print("❌ GEMINI_API_KEY не найден в .env")
+        print("💡 Добавьте ключ в .env файл:")
+        print("   GEMINI_API_KEY=your-key-here")
+        sys.exit(1)
+    
+    client = genai.Client(api_key=config.get_gemini_key())
     
     print("✅ Gemini API инициализирован")
     print()

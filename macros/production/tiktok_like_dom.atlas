@@ -1,0 +1,46 @@
+# ============================================================================
+# TikTok Like с DOM селектором
+# ============================================================================
+# Описание: Открывает TikTok в Chrome и ставит лайк используя DOM селектор
+# Автор: AI + DOM Automation
+# Дата: 2025-11-08
+# ============================================================================
+
+# Открытие Chrome
+try:
+    open ChromeApp
+    wait 2s
+    click ChromeNewTab
+    wait 1s
+catch:
+    log "Failed to open Chrome"
+    abort
+end
+
+# Переход на TikTok
+click ChromeSearchField
+wait 0.5s
+type "tiktok.com"
+wait 0.5s
+key enter
+wait 3s
+
+# Ожидание загрузки страницы
+log "Waiting for TikTok to load..."
+wait 2s
+
+# Клик по лайку используя DOM селектор
+try:
+    # Используем новый DOM селектор [data-e2e="like-icon"]
+    click Chrome-tiktok-like-dom
+    wait 1s
+    log "Like clicked successfully using DOM selector!"
+catch:
+    # Fallback на Vision (старый способ с .png)
+    log "DOM selector failed, trying Vision..."
+    click Chrome-TikTok-Like
+    wait 1s
+    log "Like clicked using Vision fallback"
+end
+
+log "TikTok like macro completed!"

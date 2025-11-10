@@ -1,0 +1,8 @@
+open ChromeApp
+wait 2s
+click ChromeNewTab
+wait 1s
+type "google.com"
+wait 0.5s
+press enter
+wait 5s

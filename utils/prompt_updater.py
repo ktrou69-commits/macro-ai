@@ -12,9 +12,14 @@ prompt_updater.py
 
 import os
 import re
+import sys
 from pathlib import Path
 from typing import List, Dict, Optional
 import subprocess
+
+# Добавляем корень проекта в путь
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.api_config import api_config
 
 
 class PromptUpdater:
@@ -29,23 +34,8 @@ class PromptUpdater:
         self.structure_file = self.templates_dir / "TEMPLATES_STRUCTURE.txt"
         self.best_practices_file = self.templates_dir / "BEST_PRACTICES.txt"
         
-        # Загружаем .env
-        self._load_env()
-        self.gemini_key = os.getenv("GEMINI_API_KEY")
-    
-    def _load_env(self):
-        """Загружает переменные из .env файла"""
-        env_file = self.project_root / ".env"
-        if env_file.exists():
-            with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if key and value and not os.getenv(key):
-                            os.environ[key] = value
+        # API ключ из централизованной конфигурации
+        self.gemini_key = api_config.gemini_key
     
     def scan_templates(self) -> Dict[str, List[str]]:
         """
@@ -182,7 +172,7 @@ Chrome - Базовые:
             print("🤖 AI обновляет структуру шаблонов...")
             
             response = client.models.generate_content(
-                model="gemini-2.0-flash-exp",
+                model=api_config.gemini_model,
                 contents=prompt
             )
             
@@ -253,7 +243,7 @@ Chrome - Базовые:
             print("🤖 AI обновляет best practices...")
             
             response = client.models.generate_content(
-                model="gemini-2.0-flash-exp",
+                model=api_config.gemini_model,
                 contents=prompt
             )
             
@@ -463,7 +453,7 @@ Chrome - Базовые:
             print(f"🤖 AI создаёт структуру для {platform_name}...")
             
             response = client.models.generate_content(
-                model="gemini-2.0-flash-exp",
+                model=api_config.gemini_model,
                 contents=prompt
             )
             

@@ -1,0 +1,83 @@
+# Telegram Auto Reply INFINITE - Бесконечный автоответчик
+# Работает пока не остановишь (Ctrl+C)
+#
+# ⚠️  ВАЖНО: Бот отвечает на ПОСЛЕДНЕЕ входящее сообщение каждые 10 секунд.
+# Если новых сообщений нет - он будет отвечать на то же самое!
+#
+# РЕШЕНИЕ: Увеличь интервал проверки (duration: 30.0 или больше)
+# или используй версию с ограничением (telegram_auto_reply.yaml)
+
+sequences:
+  telegram_auto_reply_infinite:
+    name: "Telegram Auto Reply (Бесконечный)"
+    description: "Автоматически отвечает на ВСЕ новые сообщения (пока не остановишь)"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Бесконечный цикл (остановить: Ctrl+C)
+    - action: repeat
+      times: 999999  # Практически бесконечно
+      description: Обработать сообщения
+      steps:
+      
+      # 2.1. Взять последнее сообщение
+      - action: selenium_extract
+        selector: ".bubble.is-in .translatable-message"
+        index: -1
+        save_to: last_message
+        save_previous_to: previous_message  # Сохранить предыдущее для сравнения
+        skip_if_same: true  # Пропустить если совпадает с предыдущим
+        skip_empty: false
+        description: Извлечь последнее сообщение
+      
+      # 2.2. AI генерирует ответ
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+        max_tokens: 20
+        temperature: 0.8
+        save_to: reply_text
+        description: Сгенерировать ответ через AI
+      
+      # 2.4. Template: Кликнуть поле ввода
+      - action: click
+        template: templates/telegram_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Кликнуть поле ввода (Template Matching)
+      
+      - action: wait
+        duration: 0.5
+      
+      # 2.4. Selenium: Ввести текст посимвольно (имитация печати)
+      - action: selenium_type
+        selector: ".input-message-input[contenteditable='true']"
+        text: "{reply_text}"
+        interval: 0.1
+        description: Печатать AI ответ (имитация)
+      
+      - action: wait
+        duration: 0.5
+      
+      # 2.5. Template: Кликнуть кнопку отправки
+      - action: click
+        template: templates/telegram_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Нажать кнопку отправки
+      
+      # Пауза не нужна - проверка на новое сообщение встроена в selenium_extract!
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_tone: "дерзкий"  # Тон ответов (дружелюбный, формальный, веселый, саркастичный)
+  check_interval: 55.0  # Интервал проверки новых сообщений (секунды)

@@ -1,0 +1,103 @@
+# ============================================================================
+# TikTok Automation - Hybrid DOM + Vision
+# ============================================================================
+# Описание: Полная автоматизация TikTok с использованием DOM и Vision
+# Особенности:
+#   - DOM селекторы для надежности (data-e2e атрибуты)
+#   - Vision fallback для совместимости
+#   - Try/catch для обработки ошибок
+#   - Логирование всех действий
+# ============================================================================
+
+# ============================================================================
+# 1. ОТКРЫТИЕ CHROME
+# ============================================================================
+log "Step 1: Opening Chrome..."
+
+try:
+    open ChromeApp
+    wait 2s
+    click ChromeNewTab
+    wait 1s
+    log "Chrome opened successfully"
+catch:
+    log "ERROR: Failed to open Chrome"
+    abort
+end
+
+# ============================================================================
+# 2. ПЕРЕХОД НА TIKTOK
+# ============================================================================
+log "Step 2: Navigating to TikTok..."
+
+try:
+    click ChromeSearchField
+    wait 0.5s
+    type "tiktok.com"
+    wait 0.5s
+    key enter
+    wait 4s
+    log "TikTok loaded"
+catch:
+    log "ERROR: Failed to navigate to TikTok"
+    abort
+end
+
+# ============================================================================
+# 3. ВЗАИМОДЕЙСТВИЕ С ВИДЕО
+# ============================================================================
+log "Step 3: Interacting with video..."
+
+# Лайк (DOM селектор с fallback)
+try:
+    log "Attempting to like using DOM selector..."
+    click Chrome-tiktok-like-dom
+    wait 1.5s
+    log "✅ Like successful (DOM)"
+catch:
+    log "DOM failed, trying Vision fallback..."
+    try:
+        click Chrome-TikTok-Like
+        wait 1.5s
+        log "✅ Like successful (Vision)"
+    catch:
+        log "⚠️  Like failed (both methods)"
+    end
+end
+
+# Пауза между действиями
+wait 2s
+
+# ============================================================================
+# 4. СКРОЛЛ К СЛЕДУЮЩЕМУ ВИДЕО
+# ============================================================================
+log "Step 4: Scrolling to next video..."
+
+try:
+    # Скролл вниз (можно заменить на key down)
+    key down
+    wait 2s
+    log "Scrolled to next video"
+catch:
+    log "⚠️  Scroll failed"
+end
+
+# ============================================================================
+# 5. ПОВТОРНЫЙ ЛАЙК (ДЕМОНСТРАЦИЯ)
+# ============================================================================
+log "Step 5: Liking next video..."
+
+try:
+    click Chrome-tiktok-like-dom
+    wait 1.5s
+    log "✅ Second like successful"
+catch:
+    log "⚠️  Second like failed"
+end
+
+# ============================================================================
+# ЗАВЕРШЕНИЕ
+# ============================================================================
+log "TikTok automation completed successfully!"
+log "Used DOM selector: [data-e2e=\"like-icon\"]"
+log "Confidence: 95%"

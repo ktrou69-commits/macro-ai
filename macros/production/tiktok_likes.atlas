@@ -1,0 +1,15 @@
+open ChromeApp
+wait 2s
+click ChromeNewTab
+wait 1s
+click ChromeSearchField
+wait 1s
+type "tiktok.com"
+wait 0.5s
+press enter
+wait 5s
+repeat 5:
+  click Chrome-TikTok-Like
+  wait 1.5s
+  click Chrome-TikTok-ScrollDown
+  wait 2s

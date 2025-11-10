@@ -1,0 +1,23 @@
+# TikTok Auto Like - DSL Example
+# Автоматические лайки в TikTok через Chrome
+
+# Запуск Chrome (с низким порогом для отладки)
+open ChromeApp threshold=0.7
+wait 2.5s
+
+# Новая вкладка
+click ChromeNewTab
+wait 0.5s
+
+# Переход на TikTok
+click ChromeSearchField
+type "tiktok.com"
+press enter
+wait 4s
+
+# Цикл лайков
+repeat 10:
+  click Chrome-TikTok-Like
+  wait 1.5s
+  scroll down
+  wait 2s

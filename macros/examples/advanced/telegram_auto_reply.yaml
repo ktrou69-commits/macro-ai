@@ -1,0 +1,104 @@
+# Telegram Auto Reply - Автоответчик для Telegram Web
+# Извлекает новые сообщения и отвечает через AI
+
+sequences:
+  telegram_auto_reply:
+    name: "Telegram Auto Reply (10 ответов)"
+    description: "Автоматически отвечает на 10 новых сообщений"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Цикл: Обработать 10 сообщений
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать сообщения
+      steps:
+      
+      # 2.1. Извлечь ПОСЛЕДНЕЕ входящее сообщение
+      - action: selenium_extract
+        selector: ".bubble.is-in .translatable-message"
+        index: -1  # Последний элемент (самое новое сообщение)
+        save_to: last_message
+        skip_empty: false
+        wait_for_element: true
+        timeout: 5.0
+        description: Извлечь последнее сообщение
+      
+      # 2.2. AI генерирует ответ (короткий, без вариантов)
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+        max_tokens: 20
+        temperature: 0.8
+        save_to: reply_text
+        description: Сгенерировать ответ через AI
+      
+      # 2.3. Template: Кликнуть поле ввода
+      - action: click
+        template: templates/telegram_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Кликнуть поле ввода (Template Matching)
+      
+      - action: wait
+        duration: 0.5
+      
+      # 2.4. Selenium: Ввести текст посимвольно (имитация печати)
+      - action: selenium_type
+        selector: ".input-message-input[contenteditable='true']"
+        text: "{reply_text}"
+        interval: 0.1
+        description: Печатать AI ответ (имитация)
+      
+      - action: wait
+        duration: 0.5
+      
+      # 2.5. Template: Кликнуть кнопку отправки
+      - action: click
+        template: templates/telegram_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Нажать кнопку отправки
+      
+      # 2.6. Пауза перед следующей проверкой
+      - action: wait
+        duration: 15.0
+        description: Пауза перед следующей проверкой (15 секунд)
+
+  telegram_extract_all:
+    name: "Telegram Extract All Messages"
+    description: "Извлекает ВСЕ входящие сообщения"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    # 2. Извлечь ВСЕ входящие сообщения
+    - action: selenium_extract
+      selector: ".bubble.is-in .translatable-message"
+      extract_all: true  # Извлечь все!
+      save_all_to: all_messages  # Сохранить в список
+      description: Извлечь все сообщения
+    
+    # 3. Показать результат
+    - action: log
+      message: "Извлечено сообщений: {all_messages}"
+      description: Показать все сообщения
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_count: 10  # Количество ответов (10, 20, 50, 100...)
+  reply_tone: "дерзкий"  # Тон ответов (дружелюбный, формальный, веселый)
+  check_interval: 30.0  # Интервал проверки новых сообщений (секунды)

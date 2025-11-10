@@ -14,6 +14,7 @@ import sys
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
+from config import MACROS_DIR, EXAMPLES_DIR, TEMPLATES_DIR
 
 # Загрузка переменных окружения из .env
 try:
@@ -36,8 +37,8 @@ class MacroAIMaster:
     def __init__(self):
         self.project_root = Path(__file__).parent
         self.utils_dir = self.project_root / "utils"
-        self.examples_dir = self.project_root / "examples"
-        self.macros_dir = self.project_root / "macro-queues"
+        self.examples_dir = EXAMPLES_DIR
+        self.macros_dir = MACROS_DIR
         
     def clear_screen(self):
         """Очистка экрана"""
@@ -195,7 +196,7 @@ class MacroAIMaster:
             atlas_files = list(self.macros_dir.glob("*.atlas"))
             
             if not atlas_files:
-                print("⚠️  .atlas файлы не найдены в папке macro-queues/")
+                print("⚠️  .atlas файлы не найдены в папке macros/production/")
                 input("\nНажмите Enter для продолжения...")
                 return
             
@@ -581,8 +582,9 @@ INPUT: {user_input}
             client = genai.Client(api_key=gemini_key)
             
             # Генерируем контент
+            from utils.api_config import api_config
             response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model=api_config.gemini_model,
                 contents=system_prompt
             )
             result = response.text
@@ -648,7 +650,7 @@ INPUT: {user_input}
         macros = sorted(self.macros_dir.glob("*.atlas"))
         
         if not macros:
-            print("❌ Нет доступных макросов в macro-queues/")
+            print("❌ Нет доступных макросов в macros/production/")
             input("\nНажмите Enter для продолжения...")
             return
         
@@ -843,7 +845,7 @@ INPUT: {user_input}
         macros = sorted(self.macros_dir.glob("*.atlas"))
         
         if not macros:
-            print("❌ Нет доступных макросов в macro-queues/")
+            print("❌ Нет доступных макросов в macros/production/")
             input("\nНажмите Enter для продолжения...")
             return
         
@@ -876,7 +878,7 @@ INPUT: {user_input}
         macros = sorted(self.macros_dir.glob("*.atlas"))
         
         if not macros:
-            print("❌ Нет доступных макросов в macro-queues/")
+            print("❌ Нет доступных макросов в macros/production/")
             input("\nНажмите Enter для продолжения...")
             return
         
@@ -951,7 +953,7 @@ INPUT: {user_input}
         macros = sorted(self.macros_dir.glob("*.atlas"))
         
         if not macros:
-            print("❌ Нет доступных макросов в macro-queues/")
+            print("❌ Нет доступных макросов в macros/production/")
             input("\nНажмите Enter для продолжения...")
             return
         
@@ -1157,7 +1159,7 @@ INPUT: {user_input}
         print("-" * 80)
         
         if not macros:
-            print("❌ Нет макросов в macro-queues/")
+            print("❌ Нет макросов в macros/production/")
         else:
             for i, macro in enumerate(macros, 1):
                 # Читаем первую строку для описания

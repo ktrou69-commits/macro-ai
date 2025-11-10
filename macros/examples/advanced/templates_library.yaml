@@ -1,0 +1,58 @@
+# 📚 Библиотека шаблонов
+# Описание всех доступных шаблонов для AI-ассистента
+
+templates:
+  acceptAll_button.png:
+    platform: web
+    action: accept
+    description: Кнопка "Accept All" для принятия cookies
+    context: Появляется на сайтах при первом посещении
+    color: синяя или зеленая
+    
+  button.png:
+    platform: generic
+    action: click
+    description: Универсальная кнопка
+    context: Общего назначения
+    
+  down_button.png:
+    platform: generic
+    action: scroll
+    description: Кнопка прокрутки вниз
+    context: Навигация по странице
+    
+  entergpt_button.png:
+    platform: chatgpt
+    action: submit
+    description: Кнопка отправки сообщения в ChatGPT
+    context: Поле ввода ChatGPT
+    color: зеленая стрелка
+    
+  gptsearch_button.png:
+    platform: chatgpt
+    action: search
+    description: Кнопка поиска в ChatGPT
+    context: Поиск по истории чатов
+    
+  plus_button.png:
+    platform: generic
+    action: add
+    description: Кнопка добавления/плюс
+    context: Создание нового элемента
+    
+  tiktok_site.png:
+    platform: tiktok
+    action: navigate
+    description: Логотип TikTok
+    context: Навигация на главную страницу
+
+# Примеры использования для AI:
+# 
+# Задача: "Автоматизируй принятие cookies"
+# Решение: Использовать acceptAll_button.png
+#
+# Задача: "Отправь сообщение в ChatGPT"
+# Решение: Использовать entergpt_button.png
+#
+# Задача: "Скроллинг в TikTok"
+# Решение: Использовать down_button.png или scroll action

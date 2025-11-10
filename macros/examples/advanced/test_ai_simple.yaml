@@ -1,0 +1,138 @@
+# 🧪 Простой тест AI для Atlas
+# Минимальная конфигурация для тестирования
+
+variables:
+  reply_count: 3  # Фиксированное число
+
+sequences:
+  # ========== Простой тест ==========
+  test_ai_simple:
+    name: Простой тест AI
+    description: Только AI генерация без браузера
+    
+    steps:
+    # Тест 1: Простая генерация
+    - action: ai_generate
+      model: gemini
+      prompt: "Напиши короткий дружелюбный ответ на: 'Отличное видео!'"
+      max_tokens: 50
+      save_to: reply1
+      description: Тест AI генерации
+    
+    - action: wait
+      duration: 1.0
+      description: "Ответ 1: {reply1}"
+    
+    # Тест 2: С переменной
+    - action: ai_generate
+      prompt: "Ответь на: 'Спасибо за контент 👍'"
+      save_to: reply2
+    
+    - action: wait
+      duration: 1.0
+      description: "Ответ 2: {reply2}"
+    
+    # Тест 3: Повторение (фиксированное число)
+    - action: repeat
+      times: 2
+      description: Тест повторения
+      steps:
+      - action: ai_generate
+        prompt: "Напиши мотивирующий комментарий (30 символов)"
+        max_tokens: 30
+        save_to: motivational
+      
+      - action: wait
+        duration: 1.0
+        description: "Мотивация: {motivational}"
+
+  # ========== Тест с переменной ==========
+  test_variable_repeat:
+    name: Тест переменной в repeat
+    description: Проверка {reply_count}
+    
+    steps:
+    - action: repeat
+      times: "{reply_count}"  # Из variables
+      description: Повторить {reply_count} раз
+      steps:
+      - action: ai_generate
+        prompt: "Короткий позитивный комментарий"
+        save_to: comment
+      
+      - action: wait
+        duration: 0.5
+        description: "Комментарий: {comment}"
+
+  # ========== Минимальный Atlas тест ==========
+  atlas_minimal:
+    name: Atlas минимальный тест
+    description: Только кнопки без AI
+    
+    steps:
+    # 1. Открыть комментарии
+    - action: click
+      template: templates/tiktok_comments_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Кликнуть "Ответить" (два клика для надежности)
+    # Первый клик: Может кликнуть по "20 Antworten anzeigen" (она исчезнет)
+    - action: click
+      template: templates/tiktok_reply_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Первый клик (раскрыть ответы если нужно)
+    
+    - action: wait
+      duration: 0.5
+    
+    # Второй клик: Теперь точно кликнет по нужной "Antworten"
+    - action: click
+      template: templates/tiktok_reply_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Второй клик (кнопка ответить)
+    
+    - action: wait
+      duration: 1.0
+    
+    # 3. Кликнуть поле ввода
+    - action: click
+      template: templates/tiktok_input_field.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Поле ввода комментария
+    
+    - action: wait
+      duration: 0.5
+    
+    # 4. Ввести тестовый текст
+    - action: type
+      text: "Тестовый комментарий 👍"
+      description: Ввод текста
+    
+    - action: wait
+      duration: 1.0
+    
+    # 5. Кликнуть "Отправить" (верхняя кнопка, не нижняя)
+    - action: click
+      templates:  # Список шаблонов (попробует по порядку)
+        - templates/tiktok_send_btn_long.png   # Для длинного текста
+        - templates/tiktok_send_btn.png        # Для короткого текста (fallback)
+      wait_for_appear: true
+      timeout: 3.0
+      index: 1  # ✅ Работает! Верхняя кнопка (ближе к полю ввода)
+      description: Кнопка отправить (верхняя)
+    
+    - action: wait
+      duration: 1.0
+      description: Готово!
+
+settings:
+  default_delay: 3
+  failsafe: true

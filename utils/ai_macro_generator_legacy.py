@@ -8,9 +8,14 @@ AI генератор макросов - создание .atlas файлов п
 
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Optional, Dict, List
 import subprocess
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config import MACROS_DIR, TEMPLATES_DIR
+from utils.api_config import api_config
 
 
 class AIMacroGenerator:
@@ -19,31 +24,13 @@ class AIMacroGenerator:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.templates_dir = project_root / "templates"
-        self.macros_dir = project_root / "macro-queues"
+        self.macros_dir = MACROS_DIR
         self.dsl_ref_path = project_root / "dsl_references" / "DSL_REFERENCE.txt"
         
-        # Загружаем .env файл если есть
-        self._load_env()
-        
-        # API ключи (из переменных окружения или .env)
-        self.openai_key = os.getenv("OPENAI_API_KEY")
-        self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-        self.gemini_key = os.getenv("GEMINI_API_KEY")
-    
-    def _load_env(self):
-        """Загружает переменные из .env файла"""
-        env_file = self.project_root / ".env"
-        if env_file.exists():
-            with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        # Устанавливаем только если еще не установлено
-                        if key and value and not os.getenv(key):
-                            os.environ[key] = value
+        # API ключи из централизованной конфигурации
+        self.openai_key = api_config.openai_key
+        self.anthropic_key = api_config.anthropic_key
+        self.gemini_key = api_config.gemini_key
     
     def get_templates_structure(self) -> str:
         """Получает структуру шаблонов с описаниями"""

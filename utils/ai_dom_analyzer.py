@@ -60,7 +60,8 @@ class AIDOMAnalyzer:
         
         # Инициализация Gemini (новый SDK)
         self.client = genai.Client(api_key=self.api_key)
-        self.model_name = 'gemini-2.0-flash-exp'
+        from utils.api_config import api_config
+        self.model_name = api_config.gemini_model
     
     def analyze_html(self, html_snippet: str, context: str = "") -> Dict:
         """

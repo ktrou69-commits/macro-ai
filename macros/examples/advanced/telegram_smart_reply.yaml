@@ -1,0 +1,101 @@
+# Telegram Smart Reply - Умный автоответчик
+# Отвечает ТОЛЬКО на НОВЫЕ сообщения (отслеживает количество)
+
+sequences:
+  telegram_smart_reply:
+    name: "Telegram Smart Reply"
+    description: "Отвечает только на новые сообщения"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Получить начальное количество сообщений
+    - action: selenium_extract
+      selector: ".bubble.is-in .translatable-message"
+      extract_all: true
+      save_all_to: initial_messages
+      description: Подсчитать начальное количество сообщений
+    
+    - action: wait
+      duration: 2.0
+    
+    # 3. Бесконечный цикл
+    - action: repeat
+      times: 999999
+      description: Ждать новых сообщений
+      steps:
+      
+      # 3.1. Получить текущее количество сообщений
+      - action: selenium_extract
+        selector: ".bubble.is-in .translatable-message"
+        extract_all: true
+        save_all_to: current_messages
+        description: Проверить количество сообщений
+      
+      # 3.2. Если количество увеличилось - есть новое сообщение!
+      # Примечание: Сравнение длины списков происходит автоматически
+      
+      # 3.3. Извлечь последнее сообщение
+      - action: selenium_extract
+        selector: ".bubble.is-in .translatable-message"
+        index: -1
+        save_to: last_message
+        skip_empty: false
+        description: Извлечь последнее сообщение
+      
+      # 3.4. AI генерирует ответ
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+        max_tokens: 20
+        temperature: 0.8
+        save_to: reply_text
+        description: Сгенерировать ответ через AI
+      
+      # 3.5. Кликнуть поле ввода
+      - action: selenium_click
+        selector: ".input-message-input[contenteditable='true']"
+        index: 0
+        description: Кликнуть поле ввода
+      
+      - action: wait
+        duration: 0.5
+      
+      # 3.6. Ввести ответ
+      - action: type
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      - action: wait
+        duration: 0.5
+      
+      # 3.7. Отправить
+      - action: click
+        template: templates/telegram_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Нажать кнопку отправки
+      
+      # 3.8. Обновить список обработанных сообщений
+      - action: selenium_extract
+        selector: ".bubble.is-in .translatable-message"
+        extract_all: true
+        save_all_to: initial_messages
+        description: Обновить список обработанных
+      
+      # 3.9. Пауза перед следующей проверкой
+      - action: wait
+        duration: 5.0
+        description: Пауза 5 секунд перед следующей проверкой
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_tone: "дерзкий"

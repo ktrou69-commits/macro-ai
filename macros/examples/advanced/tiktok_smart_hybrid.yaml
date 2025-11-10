@@ -1,0 +1,126 @@
+# 🧠 Умный гибридный подход
+#
+# Selenium - для поиска комментариев и получения координат
+# PyAutoGUI - для эмуляции действий пользователя (клики)
+# Template - для ввода текста и отправки
+# AI - для генерации ответов
+
+variables:
+  ai_model: gemini-2.0-flash-exp
+  reply_count: 3
+  reply_tone: дружелюбный
+  comment_index: 1  # Какой комментарий обрабатывать (0=первый, 1=второй, 2=третий)
+
+sequences:
+  tiktok_smart_hybrid:
+    name: TikTok Smart Hybrid
+    description: Selenium находит, PyAutoGUI кликает, AI отвечает
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    # 2. Открыть комментарии (Template)
+    - action: click
+      template: templates/tiktok_comments_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии
+    
+    - action: wait
+      duration: 2.0
+    
+    # 3. Повторить для нескольких комментариев
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать комментарии
+      steps:
+      
+      # 3.1. Selenium: Извлечь текст КОНКРЕТНОГО комментария (пропуская пустые)
+      - action: selenium_extract
+        selector: "[data-e2e='comment-level-1']"
+        index: "{comment_index}"  # Начальный индекс (0, 1, 2...)
+        save_to: comment_text
+        save_index_to: found_index  # Сохранить реальный индекс найденного комментария
+        skip_empty: true  # Пропускать пустые (картинки)
+        max_attempts: 20  # Максимум попыток (увеличено)
+        description: Найти комментарий с текстом (пропуская картинки)
+      
+      # 3.2. AI: Сгенерировать ответ
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши ОДИН короткий {reply_tone} ответ на этот комментарий TikTok. Максимум 50 символов. Только текст ответа, без вариантов и пояснений: {comment_text}"
+        max_tokens: 30
+        temperature: 0.8
+        save_to: reply_text
+        description: Сгенерировать ответ через Gemini
+      
+      # 3.3. Selenium: Получить координаты найденного комментария
+      - action: selenium_get_coordinates
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"  # Используем реальный индекс найденного контейнера
+        save_x: comment_x
+        save_y: comment_y
+        description: Получить координаты контейнера найденного комментария
+      
+      # 3.4. Selenium: Найти кнопку "Ответить" в родителе контейнера
+      - action: selenium_click
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"
+        parent_selector: ".."
+        child_selector: "span[data-e2e*='comment-reply']"
+        description: Первый клик "Ответить" через Selenium
+      
+      - action: wait
+        duration: 0.5
+      
+      # 3.5. Второй клик для открытия поля ответа
+      - action: selenium_click
+        selector: "[data-e2e='comment-level-1']"
+        index: "{found_index}"
+        parent_selector: ".."
+        child_selector: "span[data-e2e*='comment-reply']"
+        description: Второй клик "Ответить" (открыть поле ответа)
+      
+      - action: wait
+        duration: 1.0
+      
+      # 3.6. Template: Кликнуть поле ввода
+      - action: click
+        template: templates/tiktok_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Активировать поле ввода
+      
+      # 3.7. PyAutoGUI: Ввести ответ
+      - action: type
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      # 3.8. Template: Отправить
+      - action: click
+        templates:
+          - templates/tiktok_send_btn_long.png
+          - templates/tiktok_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        index: 1
+        description: Кнопка отправить (верхняя)
+      
+      # 3.9. Пауза
+      - action: wait
+        duration: 2.0
+        description: Пауза между комментариями
+      
+      # 3.10. Увеличить индекс для следующего комментария
+      - action: set_variable
+        name: comment_index
+        value: "{comment_index + 1}"
+        description: Следующий комментарий
+
+settings:
+  default_delay: 1
+  failsafe: true

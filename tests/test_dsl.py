@@ -192,9 +192,9 @@ def test_file_parsing():
     
     # Проверяем существующие примеры
     example_files = [
-        'examples/tiktok_auto_like.atlas',
-        'examples/chrome_quick_search.atlas',
-        'examples/tiktok_comment.atlas'
+        'macros/examples/advanced/tiktok_auto_like.atlas',
+        'macros/examples/advanced/chrome_quick_search.atlas',
+        'macros/examples/advanced/tiktok_comment.atlas'
     ]
     
     for filepath in example_files:

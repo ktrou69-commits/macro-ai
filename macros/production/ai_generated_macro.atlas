@@ -1,0 +1,29 @@
+try:
+    # Открываем Chrome
+    open ChromeApp
+    wait 2s
+    # Открываем новую вкладку
+    click ChromeNewTab
+    wait 1s
+    # Переходим на TikTok
+    click ChromeSearchField
+    wait 1s
+    type "tiktok.com"
+    press enter
+    wait 5s # Ожидание загрузки страницы TikTok
+catch:
+    log "Ошибка при открытии Chrome или навигации на TikTok."
+    abort
+end
+# Ставим 5 лайков и листаем видео
+repeat 5:
+    try:
+        click Chrome-TikTok-Like-dom # Используем DOM селектор для надежности
+        wait 1.5s # Ожидание анимации лайка
+    catch:
+        log "Кнопка лайка не найдена, пропускаем лайк и переходим к следующему видео."
+        # Если кнопка лайка не найдена, продолжаем выполнять скрипт, не прерываем
+    end
+    click Chrome-TikTok-ScrollDown # Скролл вниз к следующему видео
+    wait 2s # Ожидание загрузки следующего видео
+end

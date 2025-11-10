@@ -1,0 +1,119 @@
+# 🎯 Гибридный подход: Selenium (DOM) + Template (клики)
+#
+# Selenium - для чтения комментариев (динамическая длина)
+# Template - для кликов по кнопкам (уже настроено)
+
+variables:
+  ai_model: gemini-2.0-flash-exp
+  reply_count: 5
+  reply_tone: дружелюбный
+
+sequences:
+  tiktok_hybrid:
+    name: TikTok Hybrid (Selenium + Template)
+    description: Selenium для DOM, Template для кликов
+    
+    steps:
+    # 1. Подключиться к Chrome с debugging
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    # 2. Перейти на TikTok (если еще не там)
+    - action: selenium_navigate
+      url: "https://www.tiktok.com"
+      description: Открыть TikTok
+    
+    - action: wait
+      duration: 3.0
+      description: Загрузка TikTok
+    
+    # 3. Открыть комментарии (Template - уже настроено!)
+    - action: click
+      template: templates/tiktok_comments_btn.png
+      wait_for_appear: true
+      timeout: 3.0
+      description: Открыть комментарии
+    
+    - action: wait
+      duration: 2.0
+    
+    # 4. Повторить для нескольких комментариев
+    - action: repeat
+      times: "{reply_count}"
+      description: Обработать комментарии
+      steps:
+      
+      # 4.1. Извлечь текст комментария (Selenium - динамическая длина!)
+      - action: selenium_extract
+        selector: "[class*='comment-sidebar'] span"
+        index: 0  # Первый видимый комментарий
+        save_to: comment_text
+        description: Прочитать комментарий через Selenium (любая длина!)
+      
+      # 4.2. AI генерация ответа
+      - action: ai_generate
+        model: "{ai_model}"
+        prompt: "Напиши {reply_tone} ответ на комментарий TikTok (максимум 50 символов): {comment_text}"
+        max_tokens: 50
+        temperature: 0.7
+        save_to: reply_text
+        description: Сгенерировать ответ через Gemini
+      
+      # 4.3. Кликнуть "Ответить" (Template - два клика)
+      - action: click
+        template: templates/tiktok_reply_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Первый клик (раскрыть ответы)
+      
+      - action: wait
+        duration: 0.5
+      
+      - action: click
+        template: templates/tiktok_reply_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Второй клик (открыть поле ответа)
+      
+      # 4.4. Кликнуть поле ввода (Template)
+      - action: click
+        template: templates/tiktok_input_field.png
+        wait_for_appear: true
+        timeout: 3.0
+        description: Активировать поле ввода
+      
+      # 4.5. Ввести ответ (pyautogui)
+      - action: type
+        text: "{reply_text}"
+        description: Ввести AI ответ
+      
+      # 4.6. Отправить (Template)
+      - action: click
+        templates:
+          - templates/tiktok_send_btn_long.png
+          - templates/tiktok_send_btn.png
+        wait_for_appear: true
+        timeout: 3.0
+        index: 1
+        description: Кнопка отправить (верхняя)
+      
+      # 4.7. Пауза
+      - action: wait
+        duration: 2.0
+        description: Пауза между комментариями
+      
+      # 4.8. Скролл к следующему комментарию (Selenium)
+      - action: selenium_scroll
+        direction: down
+        amount: 200
+        description: Скролл к следующему
+    
+    # 5. Закрыть Selenium (опционально)
+    - action: selenium_close
+      description: Закрыть Selenium
+
+settings:
+  default_delay: 1
+  failsafe: true

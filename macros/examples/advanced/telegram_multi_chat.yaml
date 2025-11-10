@@ -1,0 +1,109 @@
+# Telegram Multi-Chat Auto Reply - Отвечает во ВСЕХ чатах с непрочитанными
+# Автоматически переключается между чатами
+
+sequences:
+  telegram_multi_chat:
+    name: "Telegram Multi-Chat Auto Reply"
+    description: "Отвечает во всех чатах с непрочитанными сообщениями"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Бесконечный цикл
+    - action: repeat
+      times: 999999
+      description: Обрабатывать все чаты
+      steps:
+      
+      # 2.1. Найти все чаты с непрочитанными (badge с цифрой 1-20)
+      - action: selenium_extract
+        selector: ".dialog-subtitle-badge-unread.is-visible"
+        extract_all: true
+        save_all_to: unread_badges
+        skip_empty: true
+        wait_for_element: false
+        timeout: 3.0
+        description: Найти чаты с непрочитанными (с цифрой)
+      
+      # 2.2. Если есть непрочитанные - кликнуть на первый чат
+      - action: selenium_click
+        selector: ".dialog-subtitle-badge-unread.is-visible"
+        index: 0
+        parent_selector: "../../.."
+        skip_empty: true
+        description: Кликнуть на чат с непрочитанными
+      
+      - action: wait
+        duration: 1.0
+      
+      # 2.3. Обработать сообщения в этом чате (до 5 сообщений)
+      - action: repeat
+        times: 5
+        description: Обработать сообщения в чате
+        steps:
+        
+        # 2.3.1. Извлечь последнее входящее сообщение
+        - action: selenium_extract
+          selector: ".bubble.is-in .translatable-message"
+          index: -1
+          save_to: last_message
+          save_previous_to: previous_message
+          skip_if_same: true
+          skip_empty: false
+          description: Извлечь последнее сообщение
+        
+        # 2.3.2. AI генерирует ответ
+        - action: ai_generate
+          model: "{ai_model}"
+          prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+          max_tokens: 20
+          temperature: 0.8
+          save_to: reply_text
+          description: Сгенерировать ответ через AI
+        
+        # 2.3.3. Кликнуть поле ввода
+        - action: click
+          template: templates/telegram_input_field.png
+          wait_for_appear: true
+          timeout: 3.0
+          description: Кликнуть поле ввода
+        
+        - action: wait
+          duration: 0.5
+        
+        # 2.3.4. Печатать ответ
+        - action: selenium_type
+          selector: ".input-message-input[contenteditable='true']"
+          text: "{reply_text}"
+          interval: 0.1
+          description: Печатать AI ответ
+        
+        - action: wait
+          duration: 0.5
+        
+        # 2.3.5. Отправить
+        - action: click
+          template: templates/telegram_send_btn.png
+          wait_for_appear: true
+          timeout: 3.0
+          description: Нажать кнопку отправки
+        
+        - action: wait
+          duration: 1.0
+      
+      # 2.4. Пауза перед проверкой следующего чата
+      - action: wait
+        duration: 5.0
+        description: Пауза перед следующим чатом
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_tone: "дерзкий"

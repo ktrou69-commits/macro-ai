@@ -1,0 +1,133 @@
+# Telegram Whitelist - Отвечает только конкретным людям
+# Укажи ID людей в переменных
+
+sequences:
+  telegram_whitelist:
+    name: "Telegram Whitelist Auto Reply"
+    description: "Отвечает ТОЛЬКО конкретным людям по их ID"
+    
+    steps:
+    # 1. Подключиться к Chrome
+    - action: selenium_connect
+      browser: chrome
+      debugger_address: "127.0.0.1:9222"
+      description: Подключиться к Chrome
+    
+    - action: wait
+      duration: 2.0
+    
+    # 2. Бесконечный цикл
+    - action: repeat
+      times: 999999
+      description: Обрабатывать whitelist чаты
+      steps:
+      
+      # 2.1. Найти ВСЕ чаты с непрочитанными
+      - action: selenium_extract
+        selector: ".dialog-subtitle-badge-unread.is-visible"
+        extract_all: true
+        save_all_to: all_unread_badges
+        skip_empty: true
+        wait_for_element: false
+        timeout: 3.0
+        description: Найти все чаты с непрочитанными
+      
+      # 2.2. Кликнуть на чат с ID из whitelist
+      # Проверяем по очереди: сначала 7204684283, потом 7816070239, потом 924192692
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='7204684283']"
+        index: 0
+        wait_for_element: false
+        timeout: 1.0
+        description: Кликнуть на Fsdf (если есть непрочитанные)
+      
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='7816070239']"
+        index: 0
+        wait_for_element: false
+        timeout: 1.0
+        description: Кликнуть на Joker (если есть непрочитанные)
+      
+      - action: selenium_click
+        selector: "a.chatlist-chat[data-peer-id='924192692']"
+        index: 0
+        wait_for_element: false
+        timeout: 1.0
+        description: Кликнуть на Артема (если есть непрочитанные)
+      
+      - action: wait
+        duration: 1.0
+      
+      # 2.3. Обработать сообщения в этом чате
+      - action: repeat
+        times: 5
+        description: Обработать сообщения
+        steps:
+        
+        # 2.3.1. Извлечь последнее входящее сообщение
+        - action: selenium_extract
+          selector: ".bubble.is-in .translatable-message"
+          index: -1
+          save_to: last_message
+          save_previous_to: previous_message
+          skip_if_same: true
+          skip_empty: false
+          description: Извлечь последнее сообщение
+        
+        # 2.3.2. AI генерирует ответ
+        - action: ai_generate
+          model: "{ai_model}"
+          prompt: "Напиши ОДИН короткий {reply_tone} ответ на это сообщение. Максимум 30 символов. Только текст ответа, без вариантов и пояснений: {last_message}"
+          max_tokens: 20
+          temperature: 0.8
+          save_to: reply_text
+          description: Сгенерировать ответ через AI
+        
+        # 2.3.3. Кликнуть поле ввода
+        - action: click
+          template: templates/telegram_input_field.png
+          wait_for_appear: true
+          timeout: 3.0
+          description: Кликнуть поле ввода
+        
+        - action: wait
+          duration: 0.5
+        
+        # 2.3.4. Печатать ответ
+        - action: selenium_type
+          selector: ".input-message-input[contenteditable='true']"
+          text: "{reply_text}"
+          interval: 0.1
+          description: Печатать AI ответ
+        
+        - action: wait
+          duration: 0.5
+        
+        # 2.3.5. Отправить
+        - action: click
+          template: templates/telegram_send_btn.png
+          wait_for_appear: true
+          timeout: 3.0
+          description: Нажать кнопку отправки
+        
+        - action: wait
+          duration: 1.0
+      
+      # 2.4. Пауза перед следующим чатом
+      - action: wait
+        duration: 5.0
+        description: Пауза перед следующим whitelist чатом
+
+# Переменные
+variables:
+  ai_model: "gemini-2.0-flash-exp"
+  reply_tone: "дерзкий"
+  
+  # ⭐ WHITELIST - ID людей которым отвечать
+  person1_id: "7204684283"   # Fsdf
+  person2_id: "7816070239"   # 𝓙𝓸𝓴𝓮𝓻 🌹
+  person3_id: "924192692"    # Артем Чумаченко
+  
+  # Добавь больше людей если нужно:
+  # person4_id: "123456789"
+  # person5_id: "987654321"
