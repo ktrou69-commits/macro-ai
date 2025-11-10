@@ -23,6 +23,5 @@ easyocr>=1.7.0
 google-genai>=1.0.0
 python-dotenv>=1.0.0
 
-# CNN for Vision (Learning System)
-tensorflow>=2.20.0
-matplotlib>=3.10.0
+# Visualization (optional)
+# matplotlib>=3.10.0  # Uncomment if needed for debugging

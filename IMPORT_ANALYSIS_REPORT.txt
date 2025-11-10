@@ -1,0 +1,165 @@
+================================================================================
+АНАЛИЗ ИМПОРТОВ ПРОЕКТА
+================================================================================
+
+ФАЙЛЫ ДЛЯ ОБНОВЛЕНИЯ:
+
+  • config.py
+  • macro_sequence.py
+  • main.py
+  • scripts/analyze_imports.py
+  • scripts/migrate_macros_python.py
+  • sequence_builder.py
+  • simulator/dsl_simulator.py
+  • tests/test_dsl.py
+  • tests/test_gemini.py
+  • utils/ai_dom_analyzer.py
+  • utils/ai_macro_generator.py
+  • utils/ai_macro_generator_legacy.py
+  • utils/api_config.py
+  • utils/check_api_quota.py
+  • utils/dom_selector_tool.py
+  • utils/prompt_updater.py
+
+================================================================================
+ИМПОРТЫ КОРНЕВЫХ МОДУЛЕЙ:
+================================================================================
+
+📄 macro_sequence.py
+   L147: from atlas_dsl_parser import AtlasDSLParser
+
+📄 sequence_builder.py
+   L1156: from selenium_helper import SeleniumHelper
+
+📄 tests/test_dsl.py
+   L7: from atlas_dsl_parser import AtlasDSLParser
+
+================================================================================
+ИМПОРТЫ ИЗ UTILS:
+================================================================================
+
+📄 main.py
+   L28: from utils.ai_macro_generator import AIMacroGenerator
+   L537: from utils.ai_macro_generator import AIMacroGenerator
+   L585: from utils.api_config import api_config
+
+📄 tests/test_gemini.py
+   L13: from utils.api_config import APIConfig
+
+📄 utils/ai_dom_analyzer.py
+   L63: from utils.api_config import api_config
+
+📄 utils/ai_macro_generator.py
+   L16: from utils.api_config import api_config
+
+📄 utils/ai_macro_generator_legacy.py
+   L18: from utils.api_config import api_config
+
+📄 utils/api_config.py
+   L54: from utils.api_config import APIConfig
+
+📄 utils/check_api_quota.py
+   L19: from utils.api_config import api_config
+
+📄 utils/dom_selector_tool.py
+   L31: from utils.dom_selector_extractor import DOMSelectorExtractor
+   L32: from utils.ai_dom_analyzer import AIDOMAnalyzer, GEMINI_AVAILABLE
+
+📄 utils/prompt_updater.py
+   L22: from utils.api_config import api_config
+
+================================================================================
+Path(__file__):
+================================================================================
+
+📄 config.py
+   L9: PROJECT_ROOT = Path(__file__).parent
+
+📄 main.py
+   L38: self.project_root = Path(__file__).parent
+
+📄 scripts/analyze_imports.py
+   L9: - Все Path(__file__) использования
+   L18: PROJECT_ROOT = Path(__file__).parent.parent
+   L56: # Path(__file__)
+   L57: if 'Path(__file__)' in line:
+   L141: print("📁 ИСПОЛЬЗОВАНИЕ Path(__file__)".center(80))
+   L177: print(f"Файлов с Path(__file__):             {len(results['path_file'])}")
+   L227: f.write("Path(__file__):\n")
+
+📄 scripts/migrate_macros_python.py
+   L19: PROJECT_ROOT = Path(__file__).parent.parent
+   L97: PROJECT_ROOT = Path(__file__).parent
+   L213: lines.insert(insert_idx + 1, "sys.path.insert(0, str(Path(__file__).parent.parent))")
+   L248: lines.insert(insert_idx + 1, "sys.path.insert(0, str(Path(__file__).parent.parent))")
+
+📄 simulator/dsl_simulator.py
+   L14: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 tests/test_gemini.py
+   L9: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/ai_dom_analyzer.py
+   L22: env_path = Path(__file__).parent.parent / '.env'
+
+📄 utils/ai_macro_generator.py
+   L14: sys.path.insert(0, str(Path(__file__).parent.parent))
+   L454: project_root = Path(__file__).parent.parent
+
+📄 utils/ai_macro_generator_legacy.py
+   L16: sys.path.insert(0, str(Path(__file__).parent.parent))
+   L479: project_root = Path(__file__).parent.parent
+
+📄 utils/api_config.py
+   L20: project_root = Path(__file__).parent.parent
+   L173: print("📁 Путь к .env:", Path(__file__).parent.parent / ".env")
+
+📄 utils/check_api_quota.py
+   L17: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/dom_selector_tool.py
+   L19: sys.path.insert(0, str(Path(__file__).parent.parent))
+   L24: env_path = Path(__file__).parent.parent / '.env'
+
+📄 utils/prompt_updater.py
+   L21: sys.path.insert(0, str(Path(__file__).parent.parent))
+   L494: project_root = Path(__file__).parent.parent
+
+================================================================================
+sys.path.insert:
+================================================================================
+
+📄 scripts/analyze_imports.py
+   L10: - Все sys.path.insert() использования
+   L60: # sys.path.insert
+   L61: if 'sys.path.insert' in line:
+   L156: print("🛤️  ИСПОЛЬЗОВАНИЕ sys.path.insert".center(80))
+   L178: print(f"Файлов с sys.path.insert:            {len(results['sys_path'])}")
+   L236: f.write("sys.path.insert:\n")
+
+📄 scripts/migrate_macros_python.py
+   L213: lines.insert(insert_idx + 1, "sys.path.insert(0, str(Path(__file__).parent.parent))")
+   L248: lines.insert(insert_idx + 1, "sys.path.insert(0, str(Path(__file__).parent.parent))")
+   L363: sys.path.insert(0, str(PROJECT_ROOT))
+
+📄 simulator/dsl_simulator.py
+   L14: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 tests/test_gemini.py
+   L9: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/ai_macro_generator.py
+   L14: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/ai_macro_generator_legacy.py
+   L16: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/check_api_quota.py
+   L17: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/dom_selector_tool.py
+   L19: sys.path.insert(0, str(Path(__file__).parent.parent))
+
+📄 utils/prompt_updater.py
+   L21: sys.path.insert(0, str(Path(__file__).parent.parent))
+
