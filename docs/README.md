@@ -138,16 +138,30 @@ docs/
 │   ├── platforms/             # Платформы (Telegram, TikTok)
 │   └── advanced/              # Продвинутое
 │
-├── architecture/              # Архитектура
-│   ├── README.md
-│   ├── overview.md
-│   ├── structure.md
-│   └── hybrid-engine.md
+├── architecture/              # Архитектура и структура
+│   ├── ARCHITECTURE_REVIEW.md
+│   ├── SRC_RESTRUCTURE_PLAN.md
+│   └── IMPORT_ANALYSIS_REPORT.txt
 │
-└── troubleshooting/           # Решение проблем
-    ├── README.md
-    ├── bugfix-pynput.md
-    └── python-313.md
+├── api/                       # API конфигурация
+│   ├── API_CONFIG_GUIDE.md
+│   ├── API_FIX_SUMMARY.md
+│   ├── API_USAGE_SUMMARY.md
+│   └── GEMINI_MODEL_FIX.md
+│
+├── migration/                 # История миграций
+│   ├── MIGRATION_INSTRUCTIONS.md
+│   ├── MACROS_REORGANIZATION_ANALYSIS.md
+│   ├── TESTS_CLEANUP_REPORT.md
+│   ├── DOCS_REORGANIZATION_SUMMARY.md
+│   └── REORGANIZATION_COMPLETE.md
+│
+├── troubleshooting/           # Решение проблем
+│   ├── README.md
+│   ├── bugfix-pynput.md
+│   └── python-313.md
+│
+└── CHANGELOG.md               # История изменений
 ```
 
 ---
