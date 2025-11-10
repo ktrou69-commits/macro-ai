@@ -51,24 +51,30 @@ case $TEST_TYPE in
     python3 tests/test_smoke.py
     echo ""
     
+    # Критичные тесты
+    echo "${BLUE}🔥 2. Критичные тесты${NC}"
+    python3 tests/test_dsl_full.py
+    python3 tests/test_macro_loading.py
+    echo ""
+    
     # Конфигурация
-    echo "${BLUE}⚙️  2. Тесты конфигурации${NC}"
+    echo "${BLUE}⚙️  3. Тесты конфигурации${NC}"
     python3 tests/test_api_config.py
     python3 tests/test_config.py
     echo ""
     
     # Импорты
-    echo "${BLUE}📦 3. Тесты импортов${NC}"
+    echo "${BLUE}📦 4. Тесты импортов${NC}"
     python3 tests/test_imports.py
     echo ""
     
     # DSL
-    echo "${BLUE}📝 4. Тесты DSL${NC}"
+    echo "${BLUE}📝 5. Тесты DSL${NC}"
     python3 tests/test_dsl.py
     echo ""
     
     # Gemini API
-    echo "${BLUE}🤖 5. Тесты Gemini API${NC}"
+    echo "${BLUE}🤖 6. Тесты Gemini API${NC}"
     python3 tests/test_gemini.py
     echo ""
     ;;
