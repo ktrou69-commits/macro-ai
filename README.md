@@ -9,7 +9,7 @@ AI генератор теперь **в 3 раза быстрее** и **на 70
 - ✅ Компактные промпты (↓75% размер)
 - ✅ Лучшее качество кода (↑11%)
 
-**[→ Подробнее об оптимизации](docs/AI_OPTIMIZATION_SUMMARY.md)**
+**[→ Подробнее об оптимизации](docs/guides/ai/optimization-summary.md)**
 
 ---
 
@@ -31,7 +31,7 @@ python3 main.py
 - 📄 `BEST_PRACTICES.txt` - правила использования
 - 📄 `DSL_REFERENCE.txt` - справочник команд
 
-**[→ Быстрая инструкция](QUICK_PROMPT_UPDATE.md)** | **[→ Полное руководство](docs/PROMPT_UPDATER_GUIDE.md)**
+**[→ Быстрая инструкция](docs/guides/ai/quick-prompt-update.md)** | **[→ Полное руководство](docs/guides/ai/prompt-updater-guide.md)**
 
 ---
 
@@ -54,7 +54,7 @@ click Button
 wait 2s
 ```
 
-**[→ Подробнее о DSL](docs/DSL_README.md)**
+**[→ Подробнее о DSL](docs/guides/dsl/README.md)**
 
 ---
 
@@ -189,24 +189,45 @@ AI поймёт контекст и сгенерирует продолжени�
 
 ## 📚 Документация
 
-**Полная документация:** [docs/INDEX.md](docs/INDEX.md)
+### 🎯 Быстрый старт
+- 🚀 [Quickstart](docs/getting-started/quickstart.md) - Начните здесь!
+- 📖 [Quickstart Atlas (DSL)](docs/getting-started/quickstart-atlas.md) - DSL язык
+- ⚙️ [Environment Setup](docs/getting-started/env-setup.md) - Настройка окружения
 
-**Быстрые ссылки:**
-- 🚀 [Быстрый старт](docs/QUICKSTART.md)
-- 🤖 [AI Recovery Assistant](docs/RECOVERY_MODAL_GUIDE.md) ⭐ **NEW**
-- 🎯 [Главное приложение (main.py)](docs/MACRO_AI_MASTER_README.md)
-- 📖 [DSL + YAML](docs/DSL_YAML_EXPLAINED.md)
-- 🔧 [Path Watcher](docs/PATH_WATCHER_QUICKSTART.md)
-- 🎨 [Создание шаблонов](docs/CREATE_TEMPLATES.md)
-- 🔍 [Как работает система](docs/HOW_IT_WORKS_DETAILED.md)
+### 📖 Руководства
+- **DSL** - [Полное руководство](docs/guides/dsl/README.md) | [Шпаргалка](docs/guides/dsl/cheatsheet.md)
+- **AI** - [Генератор](docs/guides/ai/README.md) | [Оптимизация](docs/guides/ai/optimization-summary.md)
+- **DOM** - [Автоматизация](docs/guides/dom/README.md) | [Селекторы](docs/guides/dom/automation-guide.md)
+- **Templates** - [Координаты](docs/guides/templates/README.md) | [Захват](docs/guides/templates/coordinate-cheatsheet.md)
+
+### 🏗️ Архитектура
+- [Обзор системы](docs/architecture/overview.md) - Как всё работает
+- [Структура проекта](docs/architecture/structure.md) - Организация файлов
+- [Гибридный движок](docs/architecture/hybrid-engine.md) - Vision + DOM
+
+### 🆘 Помощь
+- [Troubleshooting](docs/troubleshooting/README.md) - Решение проблем
+- [Исправления](docs/troubleshooting/bugfix-pynput.md) - Частые баги
 
 ---
 
-## 🆘 Помощь
+## 📝 История изменений
 
-**Проблемы?** 
-- 🔧 [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Решение частых проблем
+**[CHANGELOG.md](CHANGELOG.md)** - Полная история изменений проекта
+
+**Последняя версия: 2.0.0** (2025-11-10)
+- ✨ AI-powered prompt updater
+- ✨ Оптимизированный AI генератор (75% меньше)
+- ✨ Реорганизованная документация (7 категорий)
+
+---
+
+## 🆘 Поддержка
+
+**Проблемы?**
+- 🔧 [Troubleshooting](docs/troubleshooting/README.md) - Решение проблем
 - 📝 [GitHub Issues](https://github.com/ktrou69-commits/macro-ai/issues) - Сообщить о баге
+- 📚 [Документация](docs/getting-started/README.md) - Полная документация
 
 ---
 
