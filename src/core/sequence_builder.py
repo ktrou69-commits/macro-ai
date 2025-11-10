@@ -1153,7 +1153,7 @@ def main():
         elif choice == '5':
             # Selenium Helper
             try:
-                from selenium_helper import SeleniumHelper
+                from src.engines.selenium_helper import SeleniumHelper
                 helper = SeleniumHelper()
                 step = helper.interactive_setup()
                 

@@ -19,7 +19,7 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
     # Загружаем .env из корня проекта
-    env_path = Path(__file__).parent.parent / '.env'
+    env_path = Path(__file__).parent.parent.parent / '.env'
     load_dotenv(env_path)
     DOTENV_AVAILABLE = True
 except ImportError:
@@ -60,7 +60,7 @@ class AIDOMAnalyzer:
         
         # Инициализация Gemini (новый SDK)
         self.client = genai.Client(api_key=self.api_key)
-        from utils.api_config import api_config
+        from src.utils.api_config import api_config
         self.model_name = api_config.gemini_model
     
     def analyze_html(self, html_snippet: str, context: str = "") -> Dict:

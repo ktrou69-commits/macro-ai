@@ -14,9 +14,9 @@ import sys
 from pathlib import Path
 
 # Добавляем корень проекта в путь
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from utils.api_config import api_config
+from src.utils.api_config import api_config
 
 def check_quota():
     """Проверяет квоту API"""

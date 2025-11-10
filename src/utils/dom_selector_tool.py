@@ -16,20 +16,20 @@ import sys
 from pathlib import Path
 
 # Добавляем корневую папку в путь
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Загрузка .env файла
 try:
     from dotenv import load_dotenv
-    env_path = Path(__file__).parent.parent / '.env'
+    env_path = Path(__file__).parent.parent.parent / '.env'
     if env_path.exists():
         load_dotenv(env_path)
         print(f"✅ Загружен .env файл: {env_path}")
 except ImportError:
     print("⚠️  python-dotenv не установлен. Установите: pip install python-dotenv")
 
-from utils.dom_selector_extractor import DOMSelectorExtractor
-from utils.ai_dom_analyzer import AIDOMAnalyzer, GEMINI_AVAILABLE
+from src.utils.dom_selector_extractor import DOMSelectorExtractor
+from src.ai.dom_analyzer import AIDOMAnalyzer, GEMINI_AVAILABLE
 
 
 class DOMSelectorTool:

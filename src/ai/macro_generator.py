@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Optional, Dict, List, Set
 import subprocess
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import MACROS_DIR, TEMPLATES_DIR
-from utils.api_config import api_config
+from src.utils.api_config import api_config
 
 
 class AIMacroGenerator:
@@ -451,7 +451,7 @@ def main():
         sys.exit(1)
     
     user_input = sys.argv[1]
-    project_root = Path(__file__).parent.parent
+    project_root = Path(__file__).parent.parent.parent
     
     generator = AIMacroGenerator(project_root)
     filepath = generator.generate_and_save(user_input)

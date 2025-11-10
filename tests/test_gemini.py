@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from google import genai
-    from utils.api_config import APIConfig
+    from src.utils.api_config import APIConfig
     
     print("🤖 Тест Gemini API (новый SDK)")
     print()

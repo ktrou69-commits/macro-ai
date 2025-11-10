@@ -4,7 +4,13 @@ test_dsl.py
 Тестирование DSL парсера
 """
 
-from atlas_dsl_parser import AtlasDSLParser
+import sys
+from pathlib import Path
+
+# Добавляем корень проекта в путь
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.core.atlas_dsl_parser import AtlasDSLParser
 import yaml
 
 

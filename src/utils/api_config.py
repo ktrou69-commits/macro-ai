@@ -17,7 +17,7 @@ def load_env():
     
     Ищет .env в корне проекта и загружает все переменные
     """
-    project_root = Path(__file__).parent.parent
+    project_root = Path(__file__).parent.parent.parent
     env_file = project_root / ".env"
     
     if not env_file.exists():
@@ -51,7 +51,7 @@ class APIConfig:
     Централизованная конфигурация API ключей
     
     Использование:
-        from utils.api_config import APIConfig
+        from src.utils.api_config import APIConfig
         
         config = APIConfig()
         if config.has_gemini():
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     config = APIConfig()
     config.print_status()
     
-    print("📁 Путь к .env:", Path(__file__).parent.parent / ".env")
+    print("📁 Путь к .env:", Path(__file__).parent.parent.parent / ".env")
     print()
     
     if config.has_gemini():

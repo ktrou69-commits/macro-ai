@@ -14,6 +14,10 @@ import sys
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
+
+# Добавляем корень проекта в путь
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from config import MACROS_DIR, EXAMPLES_DIR, TEMPLATES_DIR
 
 # Загрузка переменных окружения из .env
@@ -25,7 +29,7 @@ except ImportError:
 
 # Импорт AI генератора
 try:
-    from utils.ai_macro_generator import AIMacroGenerator
+    from src.ai.macro_generator import AIMacroGenerator
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
@@ -534,7 +538,7 @@ wait 3s
                 current_structure = f.read()
         
         # Создаем промпт для AI
-        from utils.ai_macro_generator import AIMacroGenerator
+        from src.ai.macro_generator import AIMacroGenerator
         generator = AIMacroGenerator(self.project_root)
         
         system_prompt = f"""Ты — эксперт по созданию архитектуры UI-шаблонов для автоматизации.
@@ -582,7 +586,7 @@ INPUT: {user_input}
             client = genai.Client(api_key=gemini_key)
             
             # Генерируем контент
-            from utils.api_config import api_config
+            from src.utils.api_config import api_config
             response = client.models.generate_content(
                 model=api_config.gemini_model,
                 contents=system_prompt

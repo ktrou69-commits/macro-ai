@@ -144,7 +144,7 @@ class MacroRunner:
             if self.config_path.endswith('.atlas'):
                 # DSL формат - конвертируем в YAML
                 print(f"🔄 Обнаружен DSL формат (.atlas)")
-                from atlas_dsl_parser import AtlasDSLParser
+                from src.core.atlas_dsl_parser import AtlasDSLParser
                 parser = AtlasDSLParser()
                 parsed = parser.parse_file(self.config_path)
                 

@@ -18,8 +18,8 @@ from typing import List, Dict, Optional
 import subprocess
 
 # Добавляем корень проекта в путь
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.api_config import api_config
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src.utils.api_config import api_config
 
 
 class PromptUpdater:
@@ -491,7 +491,7 @@ def main():
     """Главная функция"""
     import sys
     
-    project_root = Path(__file__).parent.parent
+    project_root = Path(__file__).parent.parent.parent
     updater = PromptUpdater(project_root)
     
     if len(sys.argv) > 1:
