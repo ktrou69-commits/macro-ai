@@ -1,0 +1,5 @@
+repeat 5:
+  click Chrome-TikTok-Like
+  wait 1.5s
+  click Chrome-TikTok-ScrollDown
+  wait 2s

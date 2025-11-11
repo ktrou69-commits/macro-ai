@@ -4,72 +4,71 @@
 
 📂 templates/
 │
-├── ./                                   # Общие шаблоны
-│   │
-│   └── topbutton.png                    # Универсальная кнопка вверху экрана
+├── 🏠 / (root)                         # Корневая директория шаблонов
+│   └── topbutton.png                    # Пример кнопки в корневой директории
 │
-├── Atlas/                               # Шаблоны для Atlas
-│   │
-│   └── ChromeApp-btn.png                # Иконка запуска Chrome в Atlas
+├── 🌐 Atlas/                         # Разные приложения и сервисы
+│   └── ChromeApp-btn.png               # Иконка запуска Chrome (альтернативное расположение)
 │
-├── Chrome/                              # Браузер Google Chrome 🌐
+├── 🌐 Chrome/                          # Браузер Google Chrome
 │   │
-│   ├── ChromeBasicGuiButtons/           # Базовые кнопки Chrome ⚙️
-│   │   ├── ChromeNewTab-btn.png         # Кнопка "плюс" — открыть новую вкладку ➕
-│   │   ├── ChromeReload-btn.png         # Кнопка перезагрузки страницы 🔄
-│   │   └── ChromeSearchField-btn.png    # Поле поиска/адресная строка 🔍
+│   ├── ⚙️ ChromeBasicGuiButtons/           # Базовые кнопки Chrome
+│   │   ├── ChromeNewTab-btn.png        # ➕ Кнопка "плюс" — открыть новую вкладку
+│   │   ├── ChromeReload-btn.png          # 🔄 Кнопка перезагрузки страницы
+│   │   └── ChromeSearchField-btn.png     # 🔎 Поле поиска/адресная строка
 │   │
-│   ├── TikTok/                          # Вкладка TikTok 🎶
-│   │   ├── Chrome-TikTok-ScrollDown.png  # Кнопка прокрутки вниз ленты TikTok ⬇️
-│   │   ├── Chrome-TikTok-Search.png      # Кнопка поиска в TikTok 🔎
-│   │   └── Chrome-TikTok-SearchField.png # Поле поиска в TikTok ⌨️
+│   ├── 🎵 TikTok/                         # Вкладка TikTok
+│   │   ├── Chrome-TikTok-Like.png      # ❤️ Кнопка лайка видео
+│   │   ├── Chrome-TikTok-ScrollDown.png # ⬇️ Кнопка прокрутки вниз
+│   │   ├── Chrome-TikTok-Search.png    # 🔎 Кнопка поиска
+│   │   └── Chrome-TikTok-SearchField.png # 🔎 Поле поиска в TikTok
 │   │
-│   └── YouTube/                         # Вкладка YouTube ▶️
-│       └── ...                           # (Добавьте шаблоны для YouTube)
+│   └── 🎬 YouTube/                         # Вкладка YouTube
+│       └── ...                           # (Будущие шаблоны для YouTube)
 
 ================================================================================
 КРАТКИЕ ИМЕНА ШАБЛОНОВ (для использования в DSL)
 ================================================================================
 
 Общие:
-  • topbutton               - Универсальная кнопка вверху экрана
+  • topbutton                - Пример кнопки в корне
 
 Atlas:
-  • ChromeApp              - Запуск Chrome (Atlas)
+  • ChromeApp                - Запуск Chrome
 
 Chrome - Базовые:
-  • ChromeNewTab           - Новая вкладка
-  • ChromeReload           - Перезагрузка страницы
-  • ChromeSearchField      - Поле поиска/адресная строка
+  • ChromeNewTab             - Новая вкладка
+  • ChromeReload             - Перезагрузка страницы
+  • ChromeSearchField        - Поле поиска/адресная строка
 
 Chrome - TikTok:
-  • TikTokScrollDown       - Прокрутка вниз ленты TikTok
-  • TikTokSearch           - Поиск в TikTok
-  • TikTokSearchField      - Поле поиска в TikTok
+  • TikTokLike               - Лайк видео
+  • TikTokScrollDown         - Прокрутка вниз
+  • TikTokSearch             - Кнопка поиска
+  • TikTokSearchField        - Поле поиска в TikTok
 
 ================================================================================
 ТИПИЧНЫЕ СЦЕНАРИИ ИСПОЛЬЗОВАНИЯ
 ================================================================================
 
 1. Открыть Chrome и перейти на сайт:
+   ```
    open ChromeApp
    wait 2s
    click ChromeSearchField
-   write "example.com"
-   press Enter
+   type "example.com"
+   press enter
+   ```
 
-2. Открыть новую вкладку и найти что-то в TikTok:
-   click ChromeNewTab
-   wait 1s
+2. Автоматизация в TikTok:
+   ```
+   open ChromeApp
+   wait 5s
    click ChromeSearchField
-   write "tiktok.com"
-   press Enter
-   wait 3s
-   click TikTokSearch
-   write "cats"
-   press Enter
-
-3. Прокрутить ленту TikTok:
-   repeat 5 times:
-       click TikTokScrollDown
-       wait 0.5s
+   type "tiktok.com"
+   press enter
+   wait 5s
+   click TikTokLike
+   wait 1s
+   click TikTokScrollDown
+   ```
