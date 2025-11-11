@@ -144,6 +144,10 @@ class MacroRunner:
             if self.config_path.endswith('.atlas'):
                 # DSL формат - конвертируем в YAML
                 print(f"🔄 Обнаружен DSL формат (.atlas)")
+                # Добавляем корень проекта в sys.path для импортов
+                project_root = Path(__file__).parent.parent.parent
+                if str(project_root) not in sys.path:
+                    sys.path.insert(0, str(project_root))
                 from src.core.atlas_dsl_parser import AtlasDSLParser
                 parser = AtlasDSLParser()
                 parsed = parser.parse_file(self.config_path)

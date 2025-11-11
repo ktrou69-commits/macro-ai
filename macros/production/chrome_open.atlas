@@ -1,0 +1,3 @@
+open ChromeApp
+wait 2s
+click ChromeNewTab
