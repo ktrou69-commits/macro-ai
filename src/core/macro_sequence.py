@@ -12,11 +12,15 @@ from pathlib import Path
 from typing import Optional, Tuple
 import yaml
 
-import numpy as np
-from PIL import Image
+# Легкие импорты (быстрые)
 import pyautogui
-import cv2
 import pyperclip
+
+# Тяжелые импорты (ленивая загрузка)
+# numpy, PIL, cv2 загружаются только при использовании
+np = None
+Image = None
+cv2 = None
 
 # AI & Selenium (опциональные импорты)
 try:
@@ -76,6 +80,35 @@ USE_GRAYSCALE = True
 # Безопасность
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
+
+
+# ============================================================
+# Ленивая загрузка тяжелых библиотек
+# ============================================================
+
+def _lazy_import_numpy():
+    """Ленивая загрузка numpy (~0.3с)"""
+    global np
+    if np is None:
+        import numpy as _np
+        np = _np
+    return np
+
+def _lazy_import_pil():
+    """Ленивая загрузка PIL (~0.2с)"""
+    global Image
+    if Image is None:
+        from PIL import Image as _Image
+        Image = _Image
+    return Image
+
+def _lazy_import_cv2():
+    """Ленивая загрузка OpenCV (~0.5с)"""
+    global cv2
+    if cv2 is None:
+        import cv2 as _cv2
+        cv2 = _cv2
+    return cv2
 
 
 class MacroRunner:
@@ -241,7 +274,7 @@ class MacroRunner:
             return self.variables.get(var_name, value)
         return value
     
-    def _load_template(self, template_path: str) -> Optional[np.ndarray]:
+    def _load_template(self, template_path: str) -> Optional['np.ndarray']:
         """Загрузка шаблона"""
         if template_path in self.templates:
             return self.templates[template_path]
@@ -250,7 +283,9 @@ class MacroRunner:
             print(f"⚠️  Шаблон не найден: {template_path}")
             return None
         
-        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE if USE_GRAYSCALE else cv2.IMREAD_COLOR)
+        # Ленивая загрузка OpenCV
+        cv2_lib = _lazy_import_cv2()
+        template = cv2_lib.imread(template_path, cv2_lib.IMREAD_GRAYSCALE if USE_GRAYSCALE else cv2_lib.IMREAD_COLOR)
         
         if template is None:
             print(f"❌ Не удалось загрузить: {template_path}")
@@ -269,17 +304,21 @@ class MacroRunner:
         if template is None:
             return []
         
+        # Ленивая загрузка библиотек
+        np_lib = _lazy_import_numpy()
+        cv2_lib = _lazy_import_cv2()
+        
         # Захват экрана
         screenshot = pyautogui.screenshot()
-        frame = np.array(screenshot)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = np_lib.array(screenshot)
+        frame = cv2_lib.cvtColor(frame, cv2_lib.COLOR_RGB2BGR)
+        gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
         
         # Template matching
-        res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
+        res = cv2_lib.matchTemplate(gray, template, cv2_lib.TM_CCOEFF_NORMED)
         
         # Найти ВСЕ совпадения выше threshold
-        locations = np.where(res >= threshold)
+        locations = np_lib.where(res >= threshold)
         matches = []
         
         h, w = template.shape
@@ -363,10 +402,14 @@ class MacroRunner:
             # Модель не обучена, используем template matching
             return self._find_template_old(template_path, threshold=DEFAULT_THRESHOLD)
         
+        # Ленивая загрузка библиотек
+        np_lib = _lazy_import_numpy()
+        cv2_lib = _lazy_import_cv2()
+        
         # Захват экрана
         screenshot = pyautogui.screenshot()
-        frame = np.array(screenshot)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        frame = np_lib.array(screenshot)
+        frame = cv2_lib.cvtColor(frame, cv2_lib.COLOR_RGB2BGR)
         
         # CNN детекция
         try:
@@ -386,7 +429,7 @@ class MacroRunner:
                 # Запись успеха в Learning System
                 if self.learning_enabled and self.learning_system:
                     # Вырезаем область для записи
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
                     x, y = location
                     region_size = 64  # Размер окна CNN
                     x1 = max(0, x - region_size // 2)
@@ -412,7 +455,7 @@ class MacroRunner:
                     if last_success and last_success['region']:
                         region = last_success['region']
                         x, y, w, h = region
-                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
                         if y + h <= gray.shape[0] and x + w <= gray.shape[1]:
                             region_screenshot = gray[y:y+h, x:x+w]
                             self.learning_system.record_failure(
@@ -437,15 +480,19 @@ class MacroRunner:
         if template is None:
             return False, None, 0.0
         
+        # Ленивая загрузка библиотек
+        np_lib = _lazy_import_numpy()
+        cv2_lib = _lazy_import_cv2()
+        
         # Захват экрана
         screenshot = pyautogui.screenshot()
-        frame = np.array(screenshot)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = np_lib.array(screenshot)
+        frame = cv2_lib.cvtColor(frame, cv2_lib.COLOR_RGB2BGR)
+        gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
         
         # Template matching
-        res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        res = cv2_lib.matchTemplate(gray, template, cv2_lib.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2_lib.minMaxLoc(res)
         
         if max_val >= threshold:
             h, w = template.shape
@@ -1390,23 +1437,27 @@ class MacroRunner:
                 # Автопоиск текстового блока (упрощенно - весь экран)
                 screenshot = pyautogui.screenshot()
             
+            # Ленивая загрузка библиотек
+            np_lib = _lazy_import_numpy()
+            cv2_lib = _lazy_import_cv2()
+            
             # Конвертация в numpy array
-            img_array = np.array(screenshot)
+            img_array = np_lib.array(screenshot)
             
             # Предобработка для лучшего распознавания
             if preprocess:
                 # Конвертация в grayscale
                 if len(img_array.shape) == 3:
-                    img_gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                    img_gray = cv2_lib.cvtColor(img_array, cv2_lib.COLOR_RGB2GRAY)
                 else:
                     img_gray = img_array
                 
                 # Увеличение контраста (CLAHE)
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                clahe = cv2_lib.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
                 img_enhanced = clahe.apply(img_gray)
                 
                 # Бинаризация (Otsu)
-                _, img_binary = cv2.threshold(img_enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                _, img_binary = cv2_lib.threshold(img_enhanced, 0, 255, cv2_lib.THRESH_BINARY + cv2_lib.THRESH_OTSU)
                 
                 # Используем обработанное изображение
                 img_array = img_binary
