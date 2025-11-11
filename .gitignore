@@ -80,3 +80,4 @@ archive/
 
 # Development files
 .dev/
+.cache/

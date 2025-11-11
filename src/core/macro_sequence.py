@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 from typing import Optional, Tuple
 import yaml
+import hashlib
+import pickle
 
 # Легкие импорты (быстрые)
 import pyautogui
@@ -130,6 +132,53 @@ class MacroRunner:
         # self._load_templates_library()  # Теперь загружается при первом использовании
         self._load_variables()
     
+    def _get_file_hash(self, file_path: str) -> str:
+        """Получение MD5 хэша файла для кэширования"""
+        try:
+            with open(file_path, 'rb') as f:
+                return hashlib.md5(f.read()).hexdigest()
+        except Exception:
+            return ""
+    
+    def _load_from_cache(self, file_path: str) -> Optional[dict]:
+        """Загрузка из кэша по хэшу файла"""
+        cache_dir = Path(".cache")
+        if not cache_dir.exists():
+            return None
+        
+        file_hash = self._get_file_hash(file_path)
+        if not file_hash:
+            return None
+        
+        cache_file = cache_dir / f"{file_hash}.pkl"
+        if not cache_file.exists():
+            return None
+        
+        try:
+            with open(cache_file, 'rb') as f:
+                cached_data = pickle.load(f)
+                if not FAST_MODE:
+                    print(f"💾 Загружено из кэша: {Path(file_path).name}")
+                return cached_data
+        except Exception:
+            return None
+    
+    def _save_to_cache(self, file_path: str, data: dict):
+        """Сохранение в кэш"""
+        cache_dir = Path(".cache")
+        cache_dir.mkdir(exist_ok=True)
+        
+        file_hash = self._get_file_hash(file_path)
+        if not file_hash:
+            return
+        
+        cache_file = cache_dir / f"{file_hash}.pkl"
+        try:
+            with open(cache_file, 'wb') as f:
+                pickle.dump(data, f)
+        except Exception:
+            pass
+    
     def _detect_display_scale(self):
         """Определение Retina scale"""
         screen_size = pyautogui.size()
@@ -147,7 +196,7 @@ class MacroRunner:
             self.display_scale = 1.0
     
     def _load_config(self):
-        """Загрузка конфига (YAML или DSL .atlas)"""
+        """Загрузка конфига (YAML или DSL .atlas) с кэшированием"""
         if not os.path.exists(self.config_path):
             print(f"❌ Конфиг не найден: {self.config_path}")
             self.config = {'sequences': {}, 'settings': {}}
@@ -156,6 +205,14 @@ class MacroRunner:
         try:
             # Проверяем расширение файла
             if self.config_path.endswith('.atlas'):
+                # Пытаемся загрузить из кэша
+                cached_config = self._load_from_cache(self.config_path)
+                if cached_config:
+                    self.config = cached_config
+                    sequences = self.config.get('sequences', {})
+                    print(f"✅ Загружено последовательностей: {len(sequences)}")
+                    return
+                
                 # DSL формат - конвертируем в YAML
                 print(f"🔄 Обнаружен DSL формат (.atlas)")
                 # Добавляем корень проекта в sys.path для импортов
@@ -173,6 +230,9 @@ class MacroRunner:
                     'settings': {}
                 }
                 print(f"✅ DSL конвертирован: {sequence_name}")
+                
+                # Сохраняем в кэш
+                self._save_to_cache(self.config_path, self.config)
             else:
                 # Обычный YAML
                 with open(self.config_path, 'r', encoding='utf-8') as f:
