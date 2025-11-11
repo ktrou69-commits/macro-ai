@@ -33,6 +33,11 @@ class AtlasDSLParser:
         self.dom_selectors = self._load_dom_selectors()
         self.current_indent = 0
         self.indent_stack = []
+        
+        # Загрузка DSL переменных
+        self.variables = self._load_dsl_variables()
+        if self.variables:
+            print(f"✅ Загружено {len(self.variables)} DSL переменных")
     
     def _build_template_map(self) -> Dict[str, str]:
         """
@@ -108,6 +113,154 @@ class AtlasDSLParser:
         
         return dom_map
     
+    def _load_dsl_variables(self) -> Dict[str, Dict[str, str]]:
+        """
+        Загружает DSL переменные из templates/DSL_VARIABLES.txt
+        
+        Returns:
+            Dict с именами переменных и их кодом:
+            {
+                'ChromeOpen': {'code': 'open ChromeApp\nwait 2s\n...', 'params': []},
+                'TikTokComment': {'code': 'click Comment\n...', 'params': ['comment_text']}
+            }
+        """
+        variables = {}
+        
+        # Пути к файлам переменных
+        var_files = [
+            Path(self.templates_base_path) / 'DSL_VARIABLES.txt',
+            Path('dsl_references') / 'USER_VARIABLES.txt'
+        ]
+        
+        for var_file in var_files:
+            if not var_file.exists():
+                continue
+            
+            try:
+                with open(var_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Парсинг переменных
+                # Формат: ${VarName}
+                #         ----...----
+                #         код
+                #         код
+                
+                current_var = None
+                current_code = []
+                in_code_section = False
+                
+                for line in content.split('\n'):
+                    # Начало новой переменной: ${...}
+                    if line.strip().startswith('${') and line.strip().endswith('}'):
+                        # Сохраняем предыдущую переменную
+                        if current_var and current_code:
+                            code_text = '\n'.join(current_code).strip()
+                            # Извлекаем параметры из кода (например {site_url})
+                            params = re.findall(r'\{(\w+)\}', code_text)
+                            variables[current_var] = {
+                                'code': code_text,
+                                'params': list(set(params))
+                            }
+                        
+                        # Начинаем новую переменную
+                        var_name = line.strip()[2:-1]  # Убираем ${ и }
+                        current_var = var_name
+                        current_code = []
+                        in_code_section = False
+                    
+                    # Разделитель (----)
+                    elif line.strip().startswith('---'):
+                        in_code_section = True
+                    
+                    # Секция ИСПОЛЬЗОВАНИЕ или пустая строка после кода
+                    elif line.strip().startswith('ИСПОЛЬЗОВАНИЕ:') or \
+                         line.strip().startswith('================'):
+                        in_code_section = False
+                    
+                    # Код переменной
+                    elif in_code_section and current_var:
+                        # Пропускаем комментарии и пустые строки в начале
+                        if line.strip() and not line.strip().startswith('#'):
+                            current_code.append(line)
+                        elif current_code:  # Добавляем пустые строки только если уже есть код
+                            current_code.append(line)
+                
+                # Сохраняем последнюю переменную
+                if current_var and current_code:
+                    code_text = '\n'.join(current_code).strip()
+                    params = re.findall(r'\{(\w+)\}', code_text)
+                    variables[current_var] = {
+                        'code': code_text,
+                        'params': list(set(params))
+                    }
+                
+            except Exception as e:
+                print(f"⚠️  Ошибка загрузки переменных из {var_file}: {e}")
+        
+        return variables
+    
+    def _expand_variable(self, var_name: str, params: Dict[str, str] = None) -> List[str]:
+        """
+        Разворачивает переменную в список строк DSL кода
+        
+        Args:
+            var_name: Имя переменной (без ${})
+            params: Словарь параметров для подстановки
+        
+        Returns:
+            Список строк DSL кода
+        """
+        if var_name not in self.variables:
+            print(f"⚠️  Переменная ${{{var_name}}} не найдена")
+            return []
+        
+        var_data = self.variables[var_name]
+        code = var_data['code']
+        
+        # Подстановка параметров
+        if params:
+            for param_name, param_value in params.items():
+                code = code.replace(f'{{{param_name}}}', param_value)
+        
+        # Проверка на неподставленные параметры
+        missing_params = re.findall(r'\{(\w+)\}', code)
+        if missing_params:
+            print(f"⚠️  Переменная ${{{var_name}}} требует параметры: {', '.join(missing_params)}")
+        
+        return code.split('\n')
+    
+    def _parse_variable_line(self, line: str) -> Optional[tuple]:
+        """
+        Парсит строку с переменной: ${VarName} или ${VarName:param1,param2}
+        
+        Returns:
+            (var_name, params_dict) или None
+        """
+        line = line.strip()
+        
+        # Формат: ${VarName}
+        simple_match = re.match(r'^\$\{(\w+)\}$', line)
+        if simple_match:
+            return (simple_match.group(1), {})
+        
+        # Формат: ${VarName:value}
+        single_param_match = re.match(r'^\$\{(\w+):(.+)\}$', line)
+        if single_param_match:
+            var_name = single_param_match.group(1)
+            param_value = single_param_match.group(2).strip()
+            
+            # Определяем имя параметра из определения переменной
+            if var_name in self.variables:
+                var_params = self.variables[var_name]['params']
+                if var_params:
+                    # Используем первый параметр
+                    return (var_name, {var_params[0]: param_value})
+            
+            return (var_name, {'value': param_value})
+        
+        return None
+    
     def _resolve_template(self, name: str) -> Optional[str]:
         """Находит полный путь к шаблону по короткому имени"""
         # Прямое совпадение
@@ -141,6 +294,18 @@ class AtlasDSLParser:
         # Пустая строка или комментарий
         if not line or line.startswith('#'):
             return None
+        
+        # ПЕРЕМЕННАЯ: ${VarName} или ${VarName:params}
+        if line.startswith('${'):
+            var_data = self._parse_variable_line(line)
+            if var_data:
+                var_name, params = var_data
+                # Возвращаем специальный маркер для развертывания
+                return {
+                    'action': 'expand_variable',
+                    'variable': var_name,
+                    'params': params
+                }
         
         # OPEN - запуск приложения
         if line.startswith('open '):
@@ -402,6 +567,28 @@ class AtlasDSLParser:
             
             if step:
                 action = step['action']
+                
+                # РАЗВЕРТЫВАНИЕ ПЕРЕМЕННОЙ
+                if action == 'expand_variable':
+                    var_name = step['variable']
+                    var_params = step['params']
+                    
+                    # Разворачиваем переменную в строки кода
+                    expanded_lines = self._expand_variable(var_name, var_params)
+                    
+                    if expanded_lines:
+                        print(f"🔄 Развертывание ${{{var_name}}} → {len(expanded_lines)} строк")
+                        
+                        # Рекурсивно парсим каждую строку развернутого кода
+                        for exp_line in expanded_lines:
+                            exp_step = self._parse_line(exp_line)
+                            if exp_step:
+                                # Добавляем развернутые шаги
+                                if block_stack:
+                                    self._add_to_current_block(block_stack[-1], exp_step)
+                                else:
+                                    steps.append(exp_step)
+                    continue
                 
                 # TRY блок
                 if action == 'try':

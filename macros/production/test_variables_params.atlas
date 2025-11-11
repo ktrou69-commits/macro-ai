@@ -1,0 +1,9 @@
+# Тест DSL переменных с параметрами
+# Использование переменных с подстановкой значений
+
+${ChromeOpen}
+${YouTubeOpen}
+${YouTubeSearch:Python tutorial}
+${YouTubeLike}
+
+log "Видео найдено и лайкнуто!"

@@ -1,0 +1,11 @@
+# Тест DSL переменных
+# Этот макрос использует переменные для открытия TikTok и лайков
+
+${ChromeOpen}
+${TikTokOpen}
+
+repeat 3:
+  ${TikTokLike}
+  ${TikTokScrollNext}
+
+log "Готово! Поставлено 3 лайка"
