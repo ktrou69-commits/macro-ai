@@ -13,6 +13,8 @@ from pathlib import Path
 
 from .sidebar import Sidebar
 from .chat_widget import ChatWidget
+from .prompts_widget import PromptsWidget
+from .dsl_widget import DSLWidget
 
 class MainWindow(QMainWindow):
     """Главное окно приложения"""
@@ -86,9 +88,17 @@ class MainWindow(QMainWindow):
         self.content_title.setStyleSheet("color: #60A5FA; margin-bottom: 10px;")
         content_layout.addWidget(self.content_title)
         
-        # Основной контент (по умолчанию - чат)
+        # Создаем виджеты для разных режимов
         self.chat_widget = ChatWidget(self.project_root)
-        content_layout.addWidget(self.chat_widget)
+        self.prompts_widget = PromptsWidget(self.project_root)
+        self.dsl_widget = DSLWidget(self.project_root)
+        
+        # Сохраняем ссылку на layout для переключения
+        self.content_layout = content_layout
+        
+        # По умолчанию показываем чат
+        self.current_widget = self.chat_widget
+        content_layout.addWidget(self.current_widget)
         
         return content_widget
         
@@ -119,8 +129,10 @@ class MainWindow(QMainWindow):
         
         self.content_title.setText(mode_titles.get(mode, "❓ Неизвестный режим"))
         
-        # TODO: Переключение виджетов контента
-        # В будущем здесь будет переключение между разными виджетами
+        # Переключение виджетов контента
+        self._switch_content_widget(mode)
+        
+        # Обновление статуса
         if mode == "chat":
             self.status_label.setText("✅ Режим чата активен")
         elif mode == "prompts":
@@ -129,6 +141,31 @@ class MainWindow(QMainWindow):
             self.status_label.setText("📝 Управление DSL переменными")
         elif mode == "architecture":
             self.status_label.setText("🏗️ Управление архитектурой")
+    
+    def _switch_content_widget(self, mode: str):
+        """Переключение виджета контента"""
+        
+        # Удаляем текущий виджет из layout
+        if self.current_widget:
+            self.content_layout.removeWidget(self.current_widget)
+            self.current_widget.hide()
+        
+        # Выбираем новый виджет
+        if mode == "chat":
+            self.current_widget = self.chat_widget
+        elif mode == "prompts":
+            self.current_widget = self.prompts_widget
+        elif mode == "dsl":
+            self.current_widget = self.dsl_widget
+        elif mode == "architecture":
+            # TODO: Создать ArchitectureWidget  
+            self.current_widget = self.chat_widget  # Временно показываем чат
+        else:
+            self.current_widget = self.chat_widget
+        
+        # Добавляем новый виджет в layout
+        self.content_layout.addWidget(self.current_widget)
+        self.current_widget.show()
             
     def closeEvent(self, event):
         """Обработка закрытия окна"""
