@@ -240,7 +240,7 @@ class ChatWidget(QWidget):
         message_layout.addWidget(text_label)
         
         # Кнопки действий (только для AI сообщений с кодом)
-        if sender == "ai" and show_actions and ("open " in text.lower() or "click " in text.lower()):
+        if sender == "ai" and show_actions and self._has_macro_code(text):
             self.add_action_buttons(message_layout, text)
         
         # Стилизация рамки сообщения
@@ -374,6 +374,23 @@ class ChatWidget(QWidget):
 • Проверить настройки API в .env файле"""
             
             self.add_message("ai", error_response, show_actions=False)
+    
+    def _has_macro_code(self, text: str) -> bool:
+        """Проверяет, содержит ли текст код макроса"""
+        text_lower = text.lower()
+        
+        # Проверяем наличие DSL команд
+        dsl_commands = ['open ', 'click ', 'wait ', 'type ', 'press ', 'repeat ', 'scroll ']
+        has_dsl_commands = any(cmd in text_lower for cmd in dsl_commands)
+        
+        # Проверяем наличие блока кода
+        has_code_block = '```' in text
+        
+        # Проверяем ключевые слова макроса
+        macro_keywords = ['макрос', 'код макроса', 'последовательность', 'chrome', 'tiktok', 'youtube']
+        has_macro_keywords = any(keyword in text_lower for keyword in macro_keywords)
+        
+        return has_dsl_commands or (has_code_block and has_macro_keywords)
         
     def simulate_ai_response(self, user_text: str):
         """Имитация ответа AI (временная заглушка)"""
