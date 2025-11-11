@@ -1360,7 +1360,7 @@ INPUT: {user_input}
         if confirm != 'y':
             return
         
-        script_path = self.utils_dir / "prompt_updater.py"
+        script_path = self.project_root / "src" / "ai" / "prompt_updater.py"
         self.run_command(["python3", str(script_path), "--update"])
     
     def add_new_platform(self):
@@ -1393,7 +1393,7 @@ INPUT: {user_input}
             input("\nНажмите Enter для продолжения...")
             return
         
-        script_path = self.utils_dir / "prompt_updater.py"
+        script_path = self.project_root / "src" / "ai" / "prompt_updater.py"
         self.run_command(["python3", str(script_path), "--add-platform", platform, description])
     
     def show_templates_structure(self):
