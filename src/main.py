@@ -254,8 +254,9 @@ class MacroAIMaster:
         
         if confirm == 'y':
             sequence_name = atlas_file.stem
+            macro_script = self.project_root / "src" / "core" / "macro_sequence.py"
             self.run_command([
-                "python3", "macro_sequence.py",
+                "python3", str(macro_script),
                 "--config", str(atlas_file),
                 "--run", sequence_name
             ])
@@ -318,8 +319,9 @@ class MacroAIMaster:
         temp_atlas = self.create_quick_search_atlas(browser, platform, search_query)
         
         if temp_atlas:
+            macro_script = self.project_root / "src" / "core" / "macro_sequence.py"
             self.run_command([
-                "python3", "macro_sequence.py",
+                "python3", str(macro_script),
                 "--config", str(temp_atlas),
                 "--run", temp_atlas.stem
             ])
@@ -450,11 +452,37 @@ wait 3s
             input("\nНажмите Enter для продолжения...")
             return
         
-        # Предлагаем запустить
+        # Предлагаем сохранить как переменную
         print()
         print("=" * 80)
         print(f"✅ Ваша новая последовательность создана: {filepath.stem}")
         print("=" * 80)
+        print()
+        
+        # Читаем сгенерированный код
+        with open(filepath, 'r', encoding='utf-8') as f:
+            dsl_code = f.read()
+        
+        # Предлагаем сохранить как переменную
+        save_as_var = input("💡 Сохранить как переменную для повторного использования? (y/n): ").strip().lower()
+        
+        if save_as_var == 'y':
+            from src.ai.variable_generator import AIVariableGenerator
+            var_generator = AIVariableGenerator(self.project_root)
+            
+            print("\n🔄 Создание переменной...")
+            variable = var_generator.generate_variable(user_input, dsl_code)
+            
+            print(f"\n💡 Предлагаемое название: ${{{variable['name']}}}")
+            custom_name = input("   Или введите свое (Enter = использовать предложенное): ").strip()
+            
+            if custom_name and custom_name[0].isupper():
+                variable['name'] = custom_name
+            
+            if var_generator.save_variable(variable):
+                print(f"\n✅ Переменная ${{{variable['name']}}} сохранена!")
+                print("   Теперь AI сможет использовать её в будущих генерациях!")
+        
         print()
         print("Что дальше?")
         print("  1. Запустить эту последовательность")
@@ -493,11 +521,112 @@ wait 3s
             elif choice == 1:
                 self.automation_template_architecture()
             elif choice == 2:
-                print("\n🚧 В разработке...")
-                input("\nНажмите Enter для продолжения...")
+                self.automation_generate_variable()
             elif choice == 3:
                 print("\n🚧 В разработке...")
                 input("\nНажмите Enter для продолжения...")
+    
+    def automation_generate_variable(self):
+        """Генерация DSL переменной через AI"""
+        if not AI_AVAILABLE:
+            self.print_header()
+            print("❌ AI недоступен")
+            print()
+            print("Установите необходимые библиотеки:")
+            print("  pip install openai anthropic google-genai")
+            print()
+            input("Нажмите Enter для продолжения...")
+            return
+        
+        self.print_header()
+        print("📝 ГЕНЕРАЦИЯ DSL ПЕРЕМЕННОЙ")
+        print("=" * 80)
+        print()
+        print("AI создаст переменную для часто используемых последовательностей действий.")
+        print("Переменные можно использовать в макросах вместо повторения кода.")
+        print()
+        print("Примеры:")
+        print("  • 'открыть YouTube и найти видео'")
+        print("  • 'поставить лайк и пролистать'")
+        print("  • 'написать комментарий в TikTok'")
+        print()
+        print("=" * 80)
+        print()
+        
+        user_input = input("📝 Опишите действие для переменной (или 0 для отмены): ").strip()
+        
+        if not user_input or user_input == "0":
+            return
+        
+        # Генерируем DSL код через AI
+        print("\n🔄 Генерация DSL кода...")
+        from src.ai.macro_generator import AIMacroGenerator
+        macro_generator = AIMacroGenerator(self.project_root)
+        
+        dsl_code = macro_generator.generate_with_gemini(user_input)
+        
+        if not dsl_code:
+            print("❌ Не удалось сгенерировать код")
+            input("\nНажмите Enter для продолжения...")
+            return
+        
+        # Показываем сгенерированный код
+        print("\n✅ DSL код сгенерирован:")
+        print("-" * 80)
+        for i, line in enumerate(dsl_code.split('\n')[:20], 1):
+            print(f"{i:3}. {line}")
+        if len(dsl_code.split('\n')) > 20:
+            print(f"    ... (еще {len(dsl_code.split('\n')) - 20} строк)")
+        print("-" * 80)
+        
+        # Создаем переменную
+        print("\n🔄 Создание переменной...")
+        from src.ai.variable_generator import AIVariableGenerator
+        var_generator = AIVariableGenerator(self.project_root)
+        
+        variable = var_generator.generate_variable(user_input, dsl_code)
+        
+        # Показываем предпросмотр
+        print("\n💡 Предлагаемая переменная:")
+        print("=" * 80)
+        print(f"   Название: ${{{variable['name']}}}")
+        print(f"   Описание: {variable['description']}")
+        print(f"   Строк кода: {len(variable['code'].split(chr(10)))}")
+        print("=" * 80)
+        print()
+        
+        # Предлагаем изменить название
+        print("Хотите изменить название переменной?")
+        custom_name = input(f"Введите новое название или Enter для '${{{variable['name']}}}: ").strip()
+        
+        if custom_name:
+            # Проверяем формат
+            if custom_name[0].isupper() and custom_name.replace('_', '').isalnum():
+                variable['name'] = custom_name
+                print(f"✅ Название изменено на: ${{{variable['name']}}}")
+            else:
+                print("⚠️  Некорректный формат, используем предложенное название")
+        
+        # Подтверждение сохранения
+        print()
+        confirm = input(f"💾 Сохранить переменную ${{{variable['name']}}}? (y/n): ").strip().lower()
+        
+        if confirm == 'y':
+            if var_generator.save_variable(variable):
+                print("\n" + "=" * 80)
+                print(f"✅ Переменная ${{{variable['name']}}} успешно сохранена!")
+                print("=" * 80)
+                print()
+                print("Теперь вы можете использовать её в макросах:")
+                print()
+                print(f"   ${{{variable['name']}}}")
+                print()
+                print("Переменная автоматически загружается парсером и доступна в AI промпте.")
+                print()
+        else:
+            print("\n❌ Сохранение отменено")
+        
+        input("\nНажмите Enter для продолжения...")
     
     def automation_template_architecture(self):
         """AI-помощник для создания архитектуры шаблонов"""
