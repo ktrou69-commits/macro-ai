@@ -24,6 +24,7 @@ class AIMacroGenerator:
         self.templates_dir = project_root / "templates"
         self.macros_dir = MACROS_DIR
         self.dsl_ref_path = project_root / "dsl_references" / "DSL_REFERENCE.txt"
+        self.user_variables_path = project_root / "dsl_references" / "USER_VARIABLES.txt"
         
         # API ключи из централизованной конфигурации
         self.openai_key = api_config.openai_key
@@ -34,6 +35,7 @@ class AIMacroGenerator:
         self._templates_cache = {}
         self._dsl_commands_cache = None
         self._best_practices_cache = {}
+        self._user_variables_cache = None
     
     def analyze_user_intent(self, user_input: str) -> Dict[str, any]:
         """
@@ -261,6 +263,107 @@ class AIMacroGenerator:
         self._dsl_commands_cache = commands
         return commands
     
+    def load_user_variables(self) -> str:
+        """
+        Загружает пользовательские DSL переменные из USER_VARIABLES.txt
+        
+        Returns:
+            Отформатированная строка с переменными для промпта
+        """
+        # Используем кэш если есть
+        if self._user_variables_cache is not None:
+            return self._user_variables_cache
+        
+        if not self.user_variables_path.exists():
+            self._user_variables_cache = ""
+            return ""
+        
+        try:
+            with open(self.user_variables_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Парсим переменные из файла
+            variables = []
+            current_var = None
+            current_desc = None
+            current_code = []
+            in_code = False
+            
+            for line in content.split('\n'):
+                # Начало новой переменной
+                if line.strip().startswith('${') and line.strip().endswith('}'):
+                    # Сохраняем предыдущую
+                    if current_var and current_code:
+                        variables.append({
+                            'name': current_var,
+                            'description': current_desc or '',
+                            'code': '\n'.join(current_code).strip()
+                        })
+                    
+                    current_var = line.strip()[2:-1]  # Убираем ${ и }
+                    current_desc = None
+                    current_code = []
+                    in_code = False
+                
+                # Описание (комментарий после разделителя)
+                elif line.strip().startswith('# ') and not in_code and current_var:
+                    if 'Создано:' not in line and 'Использований:' not in line:
+                        current_desc = line.strip()[2:]
+                
+                # Разделитель - начало кода
+                elif line.strip().startswith('-' * 10):
+                    if not in_code:
+                        in_code = True
+                    else:
+                        in_code = False
+                
+                # Секция ИСПОЛЬЗОВАНИЕ - конец кода
+                elif line.strip().startswith('ИСПОЛЬЗОВАНИЕ:'):
+                    in_code = False
+                
+                # Код переменной
+                elif in_code and line.strip():
+                    current_code.append(line)
+            
+            # Сохраняем последнюю переменную
+            if current_var and current_code:
+                variables.append({
+                    'name': current_var,
+                    'description': current_desc or '',
+                    'code': '\n'.join(current_code).strip()
+                })
+            
+            # Если нет переменных
+            if not variables:
+                self._user_variables_cache = ""
+                return ""
+            
+            # Форматируем для промпта
+            result = "\n📚 ПОЛЬЗОВАТЕЛЬСКИЕ DSL ПЕРЕМЕННЫЕ:\n\n"
+            result += "Ты можешь использовать эти переменные, созданные пользователем:\n\n"
+            
+            for var in variables:
+                result += f"${{{var['name']}}}\n"
+                if var['description']:
+                    result += f"  Описание: {var['description']}\n"
+                result += f"  Код:\n"
+                for line in var['code'].split('\n')[:5]:  # Первые 5 строк
+                    result += f"    {line}\n"
+                if len(var['code'].split('\n')) > 5:
+                    result += f"    ... (еще {len(var['code'].split('\n')) - 5} строк)\n"
+                result += "\n"
+            
+            result += "💡 ВАЖНО: Используй эти переменные когда подходит контекст!\n"
+            result += "   Например, если пользователь просит 'открыть YouTube', используй ${YouTubeOpen} если она есть.\n"
+            
+            self._user_variables_cache = result
+            return result
+            
+        except Exception as e:
+            print(f"⚠️  Ошибка загрузки пользовательских переменных: {e}")
+            self._user_variables_cache = ""
+            return ""
+    
     def build_optimized_prompt(self, user_input: str) -> str:
         """
         Строит оптимизированный промпт на основе анализа запроса
@@ -279,6 +382,7 @@ class AIMacroGenerator:
         templates = self.get_contextual_templates(context['platforms'])
         practices = self.get_contextual_best_practices(context['actions'], context['complexity'])
         commands = self.get_dsl_commands_compact()
+        user_variables = self.load_user_variables()  # Загружаем пользовательские переменные
         
         # Строим промпт
         prompt = f"""Ты — AI-генератор DSL макросов для автоматизации Chrome.
@@ -290,6 +394,8 @@ class AIMacroGenerator:
 {commands}
 
 {practices}
+
+{user_variables}
 
 🎯 ФОРМАТ ОТВЕТА:
 
@@ -313,6 +419,9 @@ class AIMacroGenerator:
     
     def generate_with_gemini(self, user_input: str) -> Optional[str]:
         """Генерация через Google Gemini API"""
+        # Сбрасываем кэш пользовательских переменных для перечитывания файла
+        self._user_variables_cache = None
+        
         try:
             from google import genai
             
