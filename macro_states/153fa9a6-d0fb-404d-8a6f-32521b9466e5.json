@@ -1,0 +1,22 @@
+{
+  "session_id": "153fa9a6-d0fb-404d-8a6f-32521b9466e5",
+  "atlas_file": "test_voice_assistant.atlas",
+  "voice_command": "Тест голосового ассистента",
+  "current_step": 1,
+  "total_steps": 0,
+  "completed_steps": [
+    1
+  ],
+  "pending_steps": [],
+  "variables": {
+    "test": "value"
+  },
+  "last_error": null,
+  "execution_strategy": [
+    "DOM",
+    "System",
+    "CV"
+  ],
+  "start_time": "2025-11-11T22:04:17.696299",
+  "status": "running"
+}

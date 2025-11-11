@@ -18,6 +18,14 @@ import pickle
 import pyautogui
 import pyperclip
 
+# НОВОЕ: Импорт для поддержки состояний
+try:
+    from src.memory.state_manager import state_manager, MacroState
+    STATE_MANAGER_AVAILABLE = True
+except ImportError:
+    STATE_MANAGER_AVAILABLE = False
+    print("⚠️ StateManager недоступен")
+
 # Тяжелые импорты (ленивая загрузка)
 # numpy, PIL, cv2 загружаются только при использовании
 np = None
@@ -126,6 +134,11 @@ class MacroRunner:
             'screenshots': []
         }
         
+        # НОВОЕ: Поддержка состояний
+        self.session_id = None
+        self.state_manager = state_manager if STATE_MANAGER_AVAILABLE else None
+        self.current_step_index = 0
+        
         self._detect_display_scale()
         self._load_config()
         # Ленивая загрузка: templates_library и variables загружаются по требованию
@@ -194,6 +207,63 @@ class MacroRunner:
             print(f"   📐 Физическое разрешение: {screenshot.width}x{screenshot.height}")
         else:
             self.display_scale = 1.0
+    
+    def start_session(self, atlas_file: str, voice_command: str = None) -> str:
+        """Начать новую сессию выполнения"""
+        if not self.state_manager:
+            return None
+            
+        self.session_id = self.state_manager.create_session(
+            atlas_file=atlas_file,
+            voice_command=voice_command
+        )
+        return self.session_id
+    
+    def resume_session(self, session_id: str) -> bool:
+        """Продолжить существующую сессию"""
+        if not self.state_manager:
+            return False
+            
+        state = self.state_manager.get_state(session_id)
+        if not state or not state.can_resume():
+            return False
+            
+        self.session_id = session_id
+        # Восстановить контекст выполнения
+        self._restore_context_from_state(state)
+        return True
+    
+    def _restore_context_from_state(self, state: MacroState):
+        """Восстановить контекст выполнения из состояния"""
+        # Восстановить переменные
+        if hasattr(self, 'variables'):
+            self.variables.update(state.variables)
+        else:
+            self.variables = state.variables.copy()
+            
+        # Установить текущий шаг
+        self.current_step_index = state.current_step
+        
+        print(f"🔄 Восстановлена сессия {state.session_id}")
+        print(f"📍 Текущий шаг: {state.current_step}/{state.total_steps}")
+        print(f"📝 Переменные: {len(state.variables)}")
+    
+    def save_step_result(self, step_num: int, result: dict):
+        """Сохранить результат выполнения шага"""
+        if self.session_id and self.state_manager:
+            self.state_manager.save_step_result(
+                session_id=self.session_id,
+                step_num=step_num,
+                result=result
+            )
+    
+    def get_ai_context(self) -> dict:
+        """Получить контекст для ИИ"""
+        if self.session_id and self.state_manager:
+            state = self.state_manager.get_state(self.session_id)
+            if state:
+                return state.get_context_for_ai()
+        return {}
     
     def _load_config(self):
         """Загрузка конфига (YAML или DSL .atlas) с кэшированием"""

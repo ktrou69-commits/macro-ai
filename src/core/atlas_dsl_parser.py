@@ -38,6 +38,13 @@ class AtlasDSLParser:
         self.variables = self._load_dsl_variables()
         if self.variables:
             print(f"✅ Загружено {len(self.variables)} DSL переменных")
+        
+        # НОВОЕ: Поддержка системных команд
+        self.system_commands_whitelist = {
+            'open_app', 'close_app', 'focus_window', 
+            'take_screenshot', 'copy_to_clipboard',
+            'list_processes', 'switch_desktop'
+        }
     
     def _build_template_map(self) -> Dict[str, str]:
         """
@@ -306,6 +313,10 @@ class AtlasDSLParser:
                     'variable': var_name,
                     'params': params
                 }
+        
+        # НОВОЕ: @SYSTEM команды
+        if line.startswith('@system '):
+            return self._parse_system_command(line)
         
         # OPEN - запуск приложения
         if line.startswith('open '):
@@ -666,6 +677,36 @@ class AtlasDSLParser:
         result['name'] = filename.replace('_', ' ').title()
         
         return result
+    
+    def _parse_system_command(self, line: str) -> Dict[str, Any]:
+        """Парсинг @system команд"""
+        # Убираем префикс '@system '
+        command_part = line[8:].strip()
+        
+        # Парсим команду и аргументы
+        parts = command_part.split(' ', 1)
+        command = parts[0]
+        args = parts[1] if len(parts) > 1 else ""
+        
+        # Убираем кавычки из аргументов если есть
+        if args.startswith('"') and args.endswith('"'):
+            args = args[1:-1]
+        
+        # Проверяем whitelist
+        if command not in self.system_commands_whitelist:
+            raise ValueError(f"Системная команда '{command}' не разрешена")
+        
+        return {
+            'action': 'system_command',
+            'command': command,
+            'args': args,
+            'hidden': True,  # Не показывать в UI
+            'description': f'Системная команда: {command} {args}'
+        }
+    
+    def is_system_command(self, parsed_step: Dict[str, Any]) -> bool:
+        """Проверка, является ли команда системной"""
+        return parsed_step.get('action') == 'system_command'
     
     def convert_to_yaml(self, dsl_content: str) -> str:
         """Конвертирует DSL в YAML строку"""
