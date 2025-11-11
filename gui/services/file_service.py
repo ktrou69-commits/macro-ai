@@ -132,7 +132,7 @@ class FileService:
     
     def run_macro(self, file_path: str) -> Dict[str, Any]:
         """
-        Запуск макроса через macro_sequence.py
+        Запуск макроса через atlas_dsl_parser.py + macro_sequence.py
         
         Args:
             file_path: Путь к .atlas файлу
@@ -149,33 +149,68 @@ class FileService:
                     'message': f"Файл {file_path} не существует"
                 }
             
-            # Путь к atlas_runner.py (наш простой интерпретатор .atlas файлов)
-            atlas_runner_path = self.project_root / "utils" / "atlas_runner.py"
+            # Пути к необходимым файлам
+            atlas_parser_path = self.project_root / "src" / "core" / "atlas_dsl_parser.py"
+            macro_sequence_path = self.project_root / "src" / "core" / "macro_sequence.py"
             
-            if not atlas_runner_path.exists():
+            if not atlas_parser_path.exists():
                 return {
                     'success': False,
-                    'error': 'atlas_runner.py не найден',
-                    'message': "Интерпретатор .atlas файлов не найден"
+                    'error': 'atlas_dsl_parser.py не найден',
+                    'message': "Парсер .atlas файлов не найден"
                 }
             
-            # Запускаем макрос через atlas_runner
-            result = subprocess.run([
-                'python3', str(atlas_runner_path), file_path
+            if not macro_sequence_path.exists():
+                return {
+                    'success': False,
+                    'error': 'macro_sequence.py не найден',
+                    'message': "Исполнитель макросов не найден"
+                }
+            
+            # Шаг 1: Конвертируем .atlas в .yaml
+            atlas_file = Path(file_path)
+            temp_yaml = atlas_file.parent / f"{atlas_file.stem}_temp.yaml"
+            
+            # Конвертация через atlas_dsl_parser
+            convert_result = subprocess.run([
+                'python3', str(atlas_parser_path), str(atlas_file), str(temp_yaml)
             ], capture_output=True, text=True, cwd=self.project_root)
             
-            if result.returncode == 0:
+            if convert_result.returncode != 0:
+                return {
+                    'success': False,
+                    'error': f"Ошибка конвертации: {convert_result.stderr}",
+                    'message': "Не удалось конвертировать .atlas в .yaml"
+                }
+            
+            # Шаг 2: Запускаем макрос через macro_sequence.py
+            sequence_name = atlas_file.stem
+            
+            run_result = subprocess.run([
+                'python3', str(macro_sequence_path), 
+                '--config', str(temp_yaml),
+                '--run', sequence_name,
+                '--fast'
+            ], capture_output=True, text=True, cwd=self.project_root)
+            
+            # Удаляем временный файл
+            try:
+                temp_yaml.unlink()
+            except:
+                pass
+            
+            if run_result.returncode == 0:
                 return {
                     'success': True,
-                    'output': result.stdout,
-                    'message': "Макрос запущен успешно"
+                    'output': run_result.stdout,
+                    'message': "Макрос выполнен успешно"
                 }
             else:
                 return {
                     'success': False,
-                    'error': result.stderr,
-                    'output': result.stdout,
-                    'message': f"Ошибка запуска макроса: {result.stderr}"
+                    'error': run_result.stderr,
+                    'output': run_result.stdout,
+                    'message': f"Ошибка выполнения макроса: {run_result.stderr}"
                 }
                 
         except Exception as e:
