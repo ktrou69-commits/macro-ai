@@ -102,6 +102,7 @@ class MacroRunner:
         self.config = {}
         self.templates = {}
         self.templates_library = {}  # Библиотека шаблонов
+        self.templates_library_loaded = False  # Флаг загрузки библиотеки
         self.variables = {}  # Переменные
         self.display_scale = 1.0
         self.stats = {
@@ -125,7 +126,8 @@ class MacroRunner:
         
         self._detect_display_scale()
         self._load_config()
-        self._load_templates_library()
+        # Ленивая загрузка: templates_library и variables загружаются по требованию
+        # self._load_templates_library()  # Теперь загружается при первом использовании
         self._load_variables()
     
     def _detect_display_scale(self):
@@ -184,18 +186,26 @@ class MacroRunner:
             self.config = {'sequences': {}, 'settings': {}}
     
     def _load_templates_library(self):
-        """Загрузка библиотеки шаблонов"""
+        """Ленивая загрузка библиотеки шаблонов (только при первом использовании)"""
+        if self.templates_library_loaded:
+            return  # Уже загружена
+        
         library_path = "templates_library.yaml"
         if not os.path.exists(library_path):
+            self.templates_library_loaded = True
             return
         
         try:
             with open(library_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
                 self.templates_library = data.get('templates', {})
-            print(f"📚 Загружена библиотека шаблонов: {len(self.templates_library)} шаблонов")
+            if not FAST_MODE:
+                print(f"📚 Загружена библиотека шаблонов: {len(self.templates_library)} шаблонов")
+            self.templates_library_loaded = True
         except Exception as e:
-            print(f"⚠️  Ошибка загрузки библиотеки: {e}")
+            if not FAST_MODE:
+                print(f"⚠️  Ошибка загрузки библиотеки: {e}")
+            self.templates_library_loaded = True
     
     def _load_variables(self):
         """Загрузка переменных из конфига"""
@@ -213,7 +223,11 @@ class MacroRunner:
         return value
     
     def _load_template(self, template_path: str) -> Optional['np.ndarray']:
-        """Загрузка шаблона"""
+        """Загрузка шаблона (с ленивой загрузкой библиотеки)"""
+        # Ленивая загрузка библиотеки шаблонов при первом использовании
+        if not self.templates_library_loaded:
+            self._load_templates_library()
+        
         if template_path in self.templates:
             return self.templates[template_path]
         
