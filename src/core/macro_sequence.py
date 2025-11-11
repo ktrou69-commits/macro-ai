@@ -39,13 +39,17 @@ except ImportError:
     OCR_AVAILABLE = False
     print("⚠️  EasyOCR не установлен. OCR функции недоступны.")
 
+# Флаг для быстрого запуска (устанавливается в main())
+FAST_MODE = False
+
 # Learning System
 try:
     from learning import LearningSystem
     LEARNING_AVAILABLE = True
 except ImportError:
     LEARNING_AVAILABLE = False
-    print("⚠️  Learning System не установлен. Обучение недоступно.")
+    if not FAST_MODE:
+        print("⚠️  Learning System не установлен. Обучение недоступно.")
 
 # CNN Detector
 try:
@@ -53,14 +57,16 @@ try:
     CNN_AVAILABLE = True
 except ImportError:
     CNN_AVAILABLE = False
-    print("⚠️  CNN Detector недоступен (нужен TensorFlow)")
+    if not FAST_MODE:
+        print("⚠️  CNN Detector недоступен (нужен TensorFlow)")
 
 try:
     from google import genai
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
-    print("⚠️  Gemini API не установлен. Установи: pip install google-genai")
+    if not FAST_MODE:
+        print("⚠️  Gemini API не установлен. Установи: pip install google-genai")
 
 # Настройки
 DEFAULT_THRESHOLD = 0.75  # Понижен с 0.86 для лучшего поиска
@@ -1563,9 +1569,16 @@ def main():
     parser = argparse.ArgumentParser(description='Macro AI - Запуск последовательностей')
     parser.add_argument('--config', type=str, default='my_sequences.yaml', help='Путь к конфигу')
     parser.add_argument('--run', type=str, required=True, help='Имя последовательности')
-    parser.add_argument('--delay', type=int, default=3, help='Задержка перед стартом (сек)')
+    parser.add_argument('--delay', type=int, default=0, help='Задержка перед стартом (сек, 0=без задержки)')
+    parser.add_argument('--fast', action='store_true', help='Быстрый запуск (без задержки, без предупреждений)')
     
     args = parser.parse_args()
+    
+    # Устанавливаем FAST_MODE если указан флаг --fast
+    global FAST_MODE
+    if args.fast:
+        FAST_MODE = True
+        args.delay = 0  # Принудительно убираем задержку
     
     runner = MacroRunner(args.config)
     runner.run_sequence(args.run, args.delay)
