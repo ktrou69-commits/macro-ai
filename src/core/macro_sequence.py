@@ -46,24 +46,7 @@ except ImportError:
 # Флаг для быстрого запуска (устанавливается в main())
 FAST_MODE = False
 
-# Learning System
-try:
-    from learning import LearningSystem
-    LEARNING_AVAILABLE = True
-except ImportError:
-    LEARNING_AVAILABLE = False
-    if not FAST_MODE:
-        print("⚠️  Learning System не установлен. Обучение недоступно.")
-
-# CNN Detector
-try:
-    from learning.cnn_detector import CNNDetector
-    CNN_AVAILABLE = True
-except ImportError:
-    CNN_AVAILABLE = False
-    if not FAST_MODE:
-        print("⚠️  CNN Detector недоступен (нужен TensorFlow)")
-
+# AI (Gemini)
 try:
     from google import genai
     AI_AVAILABLE = True
@@ -132,14 +115,6 @@ class MacroRunner:
         self.ocr_reader = None  # EasyOCR reader
         self.ai_model = None  # Gemini AI model
         
-        # Learning System
-        self.learning_enabled = True  # Включить обучение
-        self.learning_system = None
-        
-        # CNN Detector
-        self.cnn_enabled = True  # Включить CNN детектор
-        self.cnn_detector = None
-        
         # Execution Tracking
         self.execution_state = {
             'sequence_name': '',
@@ -152,8 +127,6 @@ class MacroRunner:
         self._load_config()
         self._load_templates_library()
         self._load_variables()
-        self._init_learning_system()
-        self._init_cnn_detector()
     
     def _detect_display_scale(self):
         """Определение Retina scale"""
@@ -231,41 +204,6 @@ class MacroRunner:
             print(f"🔧 Загружено переменных: {len(self.variables)}")
             for key, value in self.variables.items():
                 print(f"   {key} = {value}")
-    
-    def _init_learning_system(self):
-        """Инициализация системы обучения"""
-        if not LEARNING_AVAILABLE:
-            self.learning_enabled = False
-            return
-        
-        if self.learning_enabled:
-            try:
-                self.learning_system = LearningSystem(
-                    db_path="learning/memory.db",
-                    retrain_threshold=100
-                )
-                print("🧠 Learning System активирована")
-            except Exception as e:
-                print(f"⚠️  Ошибка инициализации Learning System: {e}")
-                self.learning_enabled = False
-    
-    def _init_cnn_detector(self):
-        """Инициализация CNN детектора"""
-        if not CNN_AVAILABLE:
-            self.cnn_enabled = False
-            return
-        
-        if self.cnn_enabled:
-            try:
-                self.cnn_detector = CNNDetector(models_dir="learning/models/cnn")
-                available_models = self.cnn_detector.get_available_models()
-                if available_models:
-                    print(f"🧠 CNN Detector активирован ({len(available_models)} моделей)")
-                else:
-                    print("⚠️  CNN Detector активирован (нет обученных моделей)")
-            except Exception as e:
-                print(f"⚠️  Ошибка инициализации CNN Detector: {e}")
-                self.cnn_enabled = False
     
     def _resolve_variable(self, value):
         """Разрешение переменных вида ${var_name}"""
@@ -425,46 +363,9 @@ class MacroRunner:
                 center_y = int(location[1] / self.display_scale)
                 
                 self.stats['successful_finds'] += 1
-                
-                # Запись успеха в Learning System
-                if self.learning_enabled and self.learning_system:
-                    # Вырезаем область для записи
-                    gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
-                    x, y = location
-                    region_size = 64  # Размер окна CNN
-                    x1 = max(0, x - region_size // 2)
-                    y1 = max(0, y - region_size // 2)
-                    x2 = min(gray.shape[1], x + region_size // 2)
-                    y2 = min(gray.shape[0], y + region_size // 2)
-                    
-                    region_screenshot = gray[y1:y2, x1:x2]
-                    self.learning_system.record_success(
-                        template_id=template_path,
-                        screenshot=region_screenshot,
-                        region=(x1, y1, x2-x1, y2-y1),
-                        method="cnn"
-                    )
-                
                 return True, (center_x, center_y), confidence
             else:
                 self.stats['failed_finds'] += 1
-                
-                # Запись неудачи
-                if self.learning_enabled and self.learning_system:
-                    last_success = self.learning_system.db.get_last_success(template_path)
-                    if last_success and last_success['region']:
-                        region = last_success['region']
-                        x, y, w, h = region
-                        gray = cv2_lib.cvtColor(frame, cv2_lib.COLOR_BGR2GRAY)
-                        if y + h <= gray.shape[0] and x + w <= gray.shape[1]:
-                            region_screenshot = gray[y:y+h, x:x+w]
-                            self.learning_system.record_failure(
-                                template_id=template_path,
-                                screenshot=region_screenshot,
-                                region=region,
-                                method="cnn",
-                                context=f"CNN not found, confidence: {confidence:.2f}"
-                            )
                 
                 # Fallback на template matching
                 print(f"   ⚠️  CNN не нашел (confidence: {confidence:.2f}), пробуем template matching...")
@@ -503,39 +404,9 @@ class MacroRunner:
             center_y = int((top_left[1] + h // 2) / self.display_scale)
             
             self.stats['successful_finds'] += 1
-            
-            # Запись успеха в Learning System
-            if self.learning_enabled and self.learning_system:
-                region_screenshot = gray[top_left[1]:top_left[1]+h, top_left[0]:top_left[0]+w]
-                self.learning_system.record_success(
-                    template_id=template_path,
-                    screenshot=region_screenshot,
-                    region=(top_left[0], top_left[1], w, h),
-                    method="template_match"
-                )
-            
             return True, (center_x, center_y), max_val
         
         self.stats['failed_finds'] += 1
-        
-        # Запись неудачи в Learning System
-        if self.learning_enabled and self.learning_system:
-            # Пытаемся найти область где искали (последняя успешная позиция)
-            last_success = self.learning_system.db.get_last_success(template_path)
-            if last_success and last_success['region']:
-                region = last_success['region']
-                x, y, w, h = region
-                # Делаем скриншот этой области
-                if y + h <= gray.shape[0] and x + w <= gray.shape[1]:
-                    region_screenshot = gray[y:y+h, x:x+w]
-                    self.learning_system.record_failure(
-                        template_id=template_path,
-                        screenshot=region_screenshot,
-                        region=region,
-                        method="template_match",
-                        context=f"Template not found, score: {max_val:.2f}"
-                    )
-        
         return False, None, max_val
     
     def _perform_click(self, x: int, y: int, clicks: int = 1, interval: float = 0.1):
