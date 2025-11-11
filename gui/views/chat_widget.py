@@ -13,6 +13,15 @@ from PySide6.QtGui import QFont, QTextCursor, QPixmap
 from pathlib import Path
 import datetime
 
+# Импорт сервисов
+import sys
+from pathlib import Path
+gui_root = Path(__file__).parent.parent
+sys.path.insert(0, str(gui_root))
+
+from services.ai_service import AIService
+from services.file_service import FileService
+
 class ChatWidget(QWidget):
     """Виджет чата с AI для генерации макросов"""
     
@@ -20,6 +29,16 @@ class ChatWidget(QWidget):
         super().__init__()
         self.project_root = project_root
         self.chat_history = []
+        self.last_generated_macro = None  # Хранение последнего сгенерированного макроса
+        
+        # Инициализация сервисов
+        self.ai_service = AIService(project_root)
+        self.file_service = FileService(project_root)
+        
+        # Подключение сигналов AI сервиса
+        self.ai_service.generation_started.connect(self.on_ai_started)
+        self.ai_service.generation_finished.connect(self.on_ai_finished)
+        self.ai_service.progress_updated.connect(self.on_ai_progress)
         
         self.setup_ui()
         
@@ -305,8 +324,56 @@ class ChatWidget(QWidget):
         # Блокируем интерфейс и показываем прогресс
         self.set_loading(True)
         
-        # Имитация AI ответа (пока заглушка)
-        QTimer.singleShot(2000, lambda: self.simulate_ai_response(text))
+        # Запускаем реальную генерацию через AI
+        self.ai_service.generate_macro_async(text)
+    
+    def on_ai_started(self):
+        """Обработка начала AI генерации"""
+        self.set_loading(True)
+        
+    def on_ai_progress(self, status: str):
+        """Обработка прогресса AI генерации"""
+        # Можно показать статус в прогресс баре или статус баре
+        print(f"AI Progress: {status}")
+        
+    def on_ai_finished(self, success: bool, result: str, metadata: dict):
+        """Обработка завершения AI генерации"""
+        self.set_loading(False)
+        
+        if success:
+            # Создаем ответ AI с кодом
+            ai_response = f"""✅ **Макрос сгенерирован!**
+
+**Платформа:** {metadata.get('platform', 'Unknown')}
+**Описание:** {metadata.get('description', 'Автоматически сгенерированный макрос')}
+
+**Код макроса:**
+```
+{result}
+```
+
+Используйте кнопки ниже для дальнейших действий."""
+            
+            # Добавляем сообщение с кнопками действий
+            self.add_message("ai", ai_response, show_actions=True)
+            
+            # Сохраняем последний результат для кнопок
+            self.last_generated_macro = {
+                'code': result,
+                'metadata': metadata
+            }
+        else:
+            # Показываем ошибку
+            error_response = f"""❌ **Ошибка генерации макроса**
+
+{result}
+
+Попробуйте:
+• Переформулировать запрос
+• Указать конкретную платформу (TikTok, YouTube, Instagram)
+• Проверить настройки API в .env файле"""
+            
+            self.add_message("ai", error_response, show_actions=False)
         
     def simulate_ai_response(self, user_text: str):
         """Имитация ответа AI (временная заглушка)"""
@@ -365,24 +432,138 @@ repeat 5:
             scroll_bar = scroll_area.verticalScrollBar()
             scroll_bar.setValue(scroll_bar.maximum())
             
-    # Методы для кнопок действий (заглушки)
+    # Методы для кнопок действий
     def open_macro(self, code: str):
-        """Открытие макроса"""
-        QMessageBox.information(self, "Открыть макрос", "Функция будет реализована в следующей версии")
+        """Открытие/запуск макроса"""
+        if not self.last_generated_macro:
+            QMessageBox.warning(self, "Ошибка", "Нет сгенерированного макроса для запуска")
+            return
+        
+        try:
+            # Сначала сохраняем макрос во временный файл
+            metadata = self.last_generated_macro.get('metadata', {})
+            result = self.file_service.save_macro_to_file(
+                macro_code=code,
+                description=metadata.get('description', 'Временный макрос'),
+                platform=metadata.get('platform', 'Unknown')
+            )
+            
+            if result['success']:
+                # Запускаем макрос
+                run_result = self.file_service.run_macro(result['file_path'])
+                
+                if run_result['success']:
+                    QMessageBox.information(
+                        self, 
+                        "Макрос запущен", 
+                        f"Макрос успешно запущен!\n\nФайл: {result['filename']}\nВывод: {run_result.get('output', 'Нет вывода')}"
+                    )
+                else:
+                    QMessageBox.critical(
+                        self, 
+                        "Ошибка запуска", 
+                        f"Не удалось запустить макрос:\n{run_result.get('error', 'Неизвестная ошибка')}"
+                    )
+            else:
+                QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить макрос:\n{result.get('error', 'Неизвестная ошибка')}")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка запуска макроса:\n{str(e)}")
         
     def save_macro(self, code: str):
-        """Сохранение макроса"""
-        QMessageBox.information(self, "Сохранить макрос", "Функция будет реализована в следующей версии")
+        """Сохранение макроса в файл"""
+        if not self.last_generated_macro:
+            QMessageBox.warning(self, "Ошибка", "Нет сгенерированного макроса для сохранения")
+            return
+        
+        try:
+            metadata = self.last_generated_macro.get('metadata', {})
+            
+            # Диалог для ввода имени файла
+            from PySide6.QtWidgets import QInputDialog
+            
+            suggested_name = f"{metadata.get('platform', 'macro').lower()}_macro"
+            filename, ok = QInputDialog.getText(
+                self, 
+                "Сохранить макрос", 
+                "Введите имя файла (без расширения):",
+                text=suggested_name
+            )
+            
+            if ok and filename:
+                result = self.file_service.save_macro_to_file(
+                    macro_code=code,
+                    filename=filename,
+                    description=metadata.get('description', 'Сгенерированный макрос'),
+                    platform=metadata.get('platform', 'Unknown')
+                )
+                
+                if result['success']:
+                    QMessageBox.information(
+                        self, 
+                        "Макрос сохранен", 
+                        f"Макрос успешно сохранен!\n\nФайл: {result['filename']}\nПуть: {result['file_path']}"
+                    )
+                else:
+                    QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить макрос:\n{result.get('error', 'Неизвестная ошибка')}")
+                    
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка сохранения:\n{str(e)}")
         
     def create_variable(self, code: str):
-        """Создание DSL переменной"""
-        QMessageBox.information(self, "Создать переменную", "Функция будет реализована в следующей версии")
+        """Создание DSL переменной из макроса"""
+        if not self.last_generated_macro:
+            QMessageBox.warning(self, "Ошибка", "Нет сгенерированного макроса для создания переменной")
+            return
+        
+        try:
+            from PySide6.QtWidgets import QInputDialog
+            
+            metadata = self.last_generated_macro.get('metadata', {})
+            
+            # Диалог для ввода имени переменной
+            suggested_name = f"{metadata.get('platform', 'Custom')}Action"
+            var_name, ok = QInputDialog.getText(
+                self, 
+                "Создать DSL переменную", 
+                "Введите имя переменной:",
+                text=suggested_name
+            )
+            
+            if ok and var_name:
+                result = self.file_service.create_dsl_variable(
+                    name=var_name,
+                    code=code,
+                    description=metadata.get('description', 'Автоматически созданная переменная')
+                )
+                
+                if result['success']:
+                    QMessageBox.information(
+                        self, 
+                        "Переменная создана", 
+                        f"DSL переменная успешно создана!\n\nИмя: ${{{var_name}}}\nДобавлена в DSL_VARIABLES.txt"
+                    )
+                else:
+                    QMessageBox.critical(self, "Ошибка", f"Не удалось создать переменную:\n{result.get('error', 'Неизвестная ошибка')}")
+                    
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка создания переменной:\n{str(e)}")
         
     def copy_code(self, code: str):
-        """Копирование кода"""
-        from PySide6.QtGui import QClipboard
-        from PySide6.QtWidgets import QApplication
-        
-        clipboard = QApplication.clipboard()
-        clipboard.setText(code)
-        QMessageBox.information(self, "Копирование", "Код скопирован в буфер обмена!")
+        """Копирование кода в буфер обмена"""
+        try:
+            success = self.file_service.copy_to_clipboard(code)
+            
+            if success:
+                QMessageBox.information(self, "Копирование", "Код скопирован в буфер обмена!")
+            else:
+                # Fallback для других систем
+                from PySide6.QtGui import QClipboard
+                from PySide6.QtWidgets import QApplication
+                
+                clipboard = QApplication.clipboard()
+                clipboard.setText(code)
+                QMessageBox.information(self, "Копирование", "Код скопирован в буфер обмена!")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка копирования:\n{str(e)}")
