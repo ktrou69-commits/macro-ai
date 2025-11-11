@@ -15,6 +15,7 @@ from .sidebar import Sidebar
 from .chat_widget import ChatWidget
 from .prompts_widget import PromptsWidget
 from .dsl_widget import DSLWidget
+from .architecture_widget import ArchitectureWidget
 
 class MainWindow(QMainWindow):
     """Главное окно приложения"""
@@ -92,6 +93,7 @@ class MainWindow(QMainWindow):
         self.chat_widget = ChatWidget(self.project_root)
         self.prompts_widget = PromptsWidget(self.project_root)
         self.dsl_widget = DSLWidget(self.project_root)
+        self.architecture_widget = ArchitectureWidget(self.project_root)
         
         # Сохраняем ссылку на layout для переключения
         self.content_layout = content_layout
@@ -158,8 +160,7 @@ class MainWindow(QMainWindow):
         elif mode == "dsl":
             self.current_widget = self.dsl_widget
         elif mode == "architecture":
-            # TODO: Создать ArchitectureWidget  
-            self.current_widget = self.chat_widget  # Временно показываем чат
+            self.current_widget = self.architecture_widget
         else:
             self.current_widget = self.chat_widget
         

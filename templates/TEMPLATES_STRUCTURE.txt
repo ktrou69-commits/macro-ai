@@ -72,3 +72,5 @@ Chrome - TikTok:
    wait 1s
    click TikTokScrollDown
    ```
+Заметки/                            # Приложение "Заметки"
+    Notes-NewNote-btn.png              # Кнопка создания новой заметки
