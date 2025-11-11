@@ -1,0 +1,23 @@
+# Мой тестовый макрос с системными командами
+# Дата: 2025-11-11
+# Описание: Тест новой архитектуры
+
+# Открываем приложение
+@system open_app "Safari"
+wait 3s
+
+# Фокусируемся на окне
+@system focus_window "Safari"
+wait 1s
+
+# Обычные команды
+click SafariAddressBar
+type "https://google.com"
+press enter
+wait 2s
+
+# Делаем скриншот
+@system take_screenshot
+
+# Копируем в буфер
+@system copy_to_clipboard "Тест завершен успешно!"

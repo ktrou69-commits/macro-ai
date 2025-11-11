@@ -42,8 +42,8 @@ class AtlasDSLParser:
         # НОВОЕ: Поддержка системных команд
         self.system_commands_whitelist = {
             'open_app', 'close_app', 'focus_window', 
-            'take_screenshot', 'copy_to_clipboard',
-            'list_processes', 'switch_desktop'
+            'take_screenshot', 'copy_to_clipboard', 'read_clipboard',
+            'list_processes', 'switch_desktop', 'get_current_app'
         }
     
     def _build_template_map(self) -> Dict[str, str]:

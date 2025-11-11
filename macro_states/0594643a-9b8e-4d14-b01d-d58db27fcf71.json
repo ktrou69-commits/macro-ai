@@ -1,0 +1,26 @@
+{
+  "session_id": "0594643a-9b8e-4d14-b01d-d58db27fcf71",
+  "atlas_file": "test_macro_1.atlas",
+  "voice_command": "Голосовая команда 2",
+  "current_step": 3,
+  "total_steps": 0,
+  "completed_steps": [
+    1,
+    2,
+    3
+  ],
+  "pending_steps": [],
+  "variables": {
+    "step_1_result": "value_1",
+    "step_2_result": "value_2",
+    "step_3_result": "value_3"
+  },
+  "last_error": null,
+  "execution_strategy": [
+    "DOM",
+    "System",
+    "CV"
+  ],
+  "start_time": "2025-11-11T22:09:27.914503",
+  "status": "running"
+}

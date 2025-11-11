@@ -1,0 +1,22 @@
+{
+  "session_id": "19540e26-6fc1-4b0b-bb64-d60f0d4e126d",
+  "atlas_file": "test_voice_assistant.atlas",
+  "voice_command": "Тест интеграции",
+  "current_step": 1,
+  "total_steps": 0,
+  "completed_steps": [
+    1
+  ],
+  "pending_steps": [],
+  "variables": {
+    "integration_test": "passed"
+  },
+  "last_error": null,
+  "execution_strategy": [
+    "DOM",
+    "System",
+    "CV"
+  ],
+  "start_time": "2025-11-11T22:07:12.407765",
+  "status": "running"
+}
