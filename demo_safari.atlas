@@ -1,0 +1,21 @@
+# Demo: Открытие Safari через .atlas файл
+# Дата: 2025-11-11 22:25:00
+# Описание: Демонстрация системных команд
+
+# Получаем текущее приложение
+@system get_current_app
+
+# Открываем Safari
+@system open_app "Safari"
+
+# Ждем запуска
+wait 3s
+
+# Проверяем, что Safari запущен
+@system get_current_app
+
+# Делаем скриншот Safari
+@system take_screenshot "/tmp/safari_opened.png"
+
+# Копируем в буфер информацию
+@system copy_to_clipboard "Safari открыт через системные команды!"
