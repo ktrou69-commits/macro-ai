@@ -39,7 +39,7 @@ class MacroAIMaster:
     """Главное приложение MACRO AI"""
     
     def __init__(self):
-        self.project_root = Path(__file__).parent
+        self.project_root = Path(__file__).parent.parent  # Корень проекта (на уровень выше src/)
         self.utils_dir = self.project_root / "utils"
         self.examples_dir = EXAMPLES_DIR
         self.macros_dir = MACROS_DIR
