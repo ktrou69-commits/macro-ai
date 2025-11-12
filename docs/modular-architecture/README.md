@@ -361,9 +361,11 @@ pytest tests/e2e/test_voice_to_execution.py
 - **30-40x ускорение** для системных приложений
 
 ### 📚 **Документация Части 1**
-- **[PART1_IMPLEMENTATION_REPORT.md](PART1_IMPLEMENTATION_REPORT.md)** - Техническая документация
-- **[PART1_USER_GUIDE.md](PART1_USER_GUIDE.md)** - Простое объяснение для пользователей
-- **[PART1_SUMMARY.md](PART1_SUMMARY.md)** - Краткое резюме достижений
+- **[📁 part1/](part1/)** - Полная документация первой части
+- **[PART1_IMPLEMENTATION_REPORT.md](part1/PART1_IMPLEMENTATION_REPORT.md)** - Техническая документация
+- **[PART1_USER_GUIDE.md](part1/PART1_USER_GUIDE.md)** - Простое объяснение для пользователей
+- **[PART1_SUMMARY.md](part1/PART1_SUMMARY.md)** - Краткое резюме достижений
+- **[SEQUENCE_GENERATOR_UPGRADE.md](part1/SEQUENCE_GENERATOR_UPGRADE.md)** - План улучшений
 
 ## 📞 Поддержка
 
