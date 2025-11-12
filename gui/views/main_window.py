@@ -16,6 +16,7 @@ from .chat_widget import ChatWidget
 from .prompts_widget import PromptsWidget
 from .dsl_widget import DSLWidget
 from .architecture_widget import ArchitectureWidget
+from .voice_assistant_widget import VoiceAssistantWidget
 
 class MainWindow(QMainWindow):
     """Главное окно приложения"""
@@ -94,6 +95,7 @@ class MainWindow(QMainWindow):
         self.prompts_widget = PromptsWidget(self.project_root)
         self.dsl_widget = DSLWidget(self.project_root)
         self.architecture_widget = ArchitectureWidget(self.project_root)
+        self.voice_assistant_widget = VoiceAssistantWidget()
         
         # Сохраняем ссылку на layout для переключения
         self.content_layout = content_layout
@@ -126,7 +128,8 @@ class MainWindow(QMainWindow):
             "chat": "💬 Чат с AI",
             "prompts": "📋 Промпты системы",
             "dsl": "📝 DSL Переменные", 
-            "architecture": "🏗️ Архитектура шаблонов"
+            "architecture": "🏗️ Архитектура шаблонов",
+            "voice": "🎤 Голосовой ассистент"
         }
         
         self.content_title.setText(mode_titles.get(mode, "❓ Неизвестный режим"))
@@ -143,6 +146,8 @@ class MainWindow(QMainWindow):
             self.status_label.setText("📝 Управление DSL переменными")
         elif mode == "architecture":
             self.status_label.setText("🏗️ Управление архитектурой")
+        elif mode == "voice":
+            self.status_label.setText("🎤 Голосовой ассистент готов")
     
     def _switch_content_widget(self, mode: str):
         """Переключение виджета контента"""
@@ -161,6 +166,8 @@ class MainWindow(QMainWindow):
             self.current_widget = self.dsl_widget
         elif mode == "architecture":
             self.current_widget = self.architecture_widget
+        elif mode == "voice":
+            self.current_widget = self.voice_assistant_widget
         else:
             self.current_widget = self.chat_widget
         
