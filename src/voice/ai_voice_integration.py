@@ -236,6 +236,7 @@ class VoiceAIAssistant:
                 "response": ai_response,
                 "action": action_type["action"],
                 "command": action_type.get("command"),
+                "app_name": action_type.get("app_name"),
                 "macro_request": action_type.get("macro_request")
             }
             
@@ -314,11 +315,22 @@ class VoiceAIAssistant:
                 if "открываю" in response_lower:
                     # Извлекаем название после "открываю"
                     import re
-                    match = re.search(r'открываю\s+([^.!]+)', response_lower)
+                    match = re.search(r'открываю\s+([^.!,\n]+)', response_lower)
                     if match:
-                        app_name = match.group(1).strip()
+                        extracted_name = match.group(1).strip()
+                        print(f"🔍 Извлечено из AI ответа: '{extracted_name}'")
+                        
                         # Переводим на английский если нужно
-                        app_name = app_mapping.get(app_name.lower(), app_name.title())
+                        app_name = app_mapping.get(extracted_name.lower(), extracted_name)
+                        
+                        # Если не нашли точное соответствие, ищем частичное
+                        if app_name == extracted_name:
+                            for russian_name, english_name in app_mapping.items():
+                                if russian_name in extracted_name.lower() or extracted_name.lower() in russian_name:
+                                    app_name = english_name
+                                    break
+                        
+                        print(f"📱 Финальное название приложения: '{app_name}'")
             
             return {
                 "action": "command",

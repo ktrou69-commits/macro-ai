@@ -161,10 +161,12 @@ class TextToSpeech:
             
             if self.engine == "macos_say":
                 self._speak_with_say(text)
+            elif self.engine == "fallback":
+                return self._fallback_speak(text)
             elif self.engine == "pyttsx3":
                 self._speak_with_pyttsx3(text)
             else:
-                self._speak_fallback(text)
+                self._fallback_speak(text)
             
         except Exception as e:
             print(f"⚠️ Ошибка синтеза речи: {e}")
@@ -196,10 +198,26 @@ class TextToSpeech:
         except Exception as e:
             print(f"⚠️ Ошибка pyttsx3: {e}")
     
-    def _speak_fallback(self, text: str):
-        """Fallback режим - просто выводим текст"""
+    def _fallback_speak(self, text: str, priority: str = "normal") -> bool:
+        """Fallback произношение через print и системный say если доступен"""
         print(f"🔊 [FALLBACK TTS] Произношу: '{text}'")
-        time.sleep(len(text) * 0.05)  # Имитируем время произношения
+        
+        # Пытаемся использовать системный say на macOS
+        try:
+            import subprocess
+            import os
+            
+            # Проверяем, доступен ли say
+            if os.system("which say > /dev/null 2>&1") == 0:
+                # Используем say для реального произношения
+                subprocess.run(['say', text], check=False, capture_output=True)
+                print(f"🔊 [macOS say] Произнес: '{text}'")
+            
+        except Exception:
+            # Если say недоступен, просто выводим в консоль
+            pass
+            
+        return True
     
     def get_available_voices(self) -> list:
         """Получить список доступных голосов"""
