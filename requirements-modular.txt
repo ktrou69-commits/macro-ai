@@ -1,0 +1,13 @@
+# Зависимости для модульной AI системы
+# Новый Gemini API
+google-genai>=1.0.0
+
+# Fallback к старому API если новый недоступен
+google-generativeai>=0.3.0
+
+# Базовые зависимости
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# Для тестирования
+unittest-mock>=1.0.1

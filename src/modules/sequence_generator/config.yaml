@@ -1,0 +1,43 @@
+name: "sequence_generator"
+description: "Генерирует DSL последовательности по описанию пользователя (адаптация опции 6)"
+version: "1.0.0"
+author: "Macro AI Team"
+
+# AI Configuration
+ai_config:
+  model: "gemini-1.5-pro"
+  max_tokens: 4096
+  temperature: 0.7
+  
+# Prompts
+prompts:
+  base_prompt: "prompts/base_prompt.txt"
+  context_template: "prompts/context_template.txt"
+  
+# Resources (что нужно модулю)
+resources:
+  templates: true      # Нужны шаблоны изображений
+  variables: true      # Нужны DSL переменные
+  dom_selectors: true  # Нужны DOM селекторы
+  system_commands: true # Нужны системные команды
+  custom_data: false   # Кастомные данные не нужны
+  
+# Execution
+executor:
+  type: "dsl_executor"  # Используем DSL исполнитель
+  timeout: 300
+  retry_attempts: 3
+  
+# Keywords для выбора модуля координатором
+keywords:
+  - "автоматизация"
+  - "макрос" 
+  - "последовательность"
+  - "создай макрос"
+  - "генерация"
+  - "открыть и сделать"
+  - "создай автоматизацию"
+  - "сделай макрос"
+  
+priority: 1             # Высокий приоритет (0 = высший)
+enabled: true
