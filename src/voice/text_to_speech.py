@@ -81,24 +81,36 @@ class TextToSpeech:
         except Exception as e:
             print(f"⚠️ Ошибка настройки pyttsx3: {e}")
     
-    def speak(self, text: str, priority: str = "normal") -> bool:
+    def speak(self, text: str, priority: str = "normal", interrupt: bool = False):
         """
         Произнести текст
         
         Args:
             text: Текст для произношения
-            priority: Приоритет ("high", "normal", "low")
+            priority: Приоритет (high, normal, low)
+            interrupt: Прервать текущее произношение
         """
         if not text.strip():
-            return False
+            return
+        
+        # Умная логика прерывания
+        if interrupt or priority == "high":
+            # Прерываем только если это высокий приоритет или явно запрошено
+            self.stop_speech()
+            # Очищаем очередь от старых сообщений низкого приоритета
+            self._clear_low_priority_queue()
+        elif self.is_speaking and priority == "normal":
+            # Если сейчас говорим и новое сообщение обычное - ждем завершения
+            print(f"🔄 Ожидаю завершения текущего произношения для: '{text[:30]}...'")
         
         # Добавляем в очередь
-        self.speech_queue.put({
-            'text': text,
-            'priority': priority,
-            'timestamp': self._get_timestamp()
-        })
+        speech_item = {
+            "text": text,
+            "priority": priority,
+            "timestamp": time.time()
+        }
         
+        self.speech_queue.put(speech_item)
         print(f"🔊 Добавлено в очередь речи: '{text[:50]}...' (приоритет: {priority})")
         return True
     
@@ -271,6 +283,44 @@ class TextToSpeech:
         """Получить текущий timestamp"""
         from datetime import datetime
         return datetime.now().isoformat()
+    
+    def stop_speech(self):
+        """Остановить произношение и очистить очередь"""
+        self.stop_speaking()
+        # Очищаем очередь
+        while not self.speech_queue.empty():
+            try:
+                self.speech_queue.get_nowait()
+            except queue.Empty:
+                break
+        print("🔇 Речь остановлена и очередь очищена")
+    
+    def _clear_low_priority_queue(self):
+        """Очистить очередь от сообщений низкого приоритета"""
+        temp_queue = []
+        
+        # Извлекаем все элементы
+        while not self.speech_queue.empty():
+            try:
+                item = self.speech_queue.get_nowait()
+                # Сохраняем только высокий приоритет
+                if item.get('priority') == 'high':
+                    temp_queue.append(item)
+            except queue.Empty:
+                break
+        
+        # Возвращаем обратно только важные сообщения
+        for item in temp_queue:
+            self.speech_queue.put(item)
+        
+        if temp_queue:
+            print(f"🧹 Очищена очередь, сохранено {len(temp_queue)} важных сообщений")
+    
+    def speak_with_interruption(self, text: str, priority: str = "high"):
+        """Произнести текст с прерыванием текущей речи"""
+        print(f"⚡ Прерываю речь для: '{text[:30]}...'")
+        self.stop_speech()
+        return self.speak(text, priority=priority, interrupt=False)
 
 
 # Предустановленные фразы для быстрых ответов

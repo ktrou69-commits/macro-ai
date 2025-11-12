@@ -156,18 +156,23 @@ class VoiceAssistant:
             print("🔇 Ключевое слово не обнаружено, игнорируем")
     
     def _process_voice_command(self, command: str):
-        """Обработка голосовой команды с AI"""
+        """Обработка голосовой команды с AI и умным управлением речью"""
         self.stats['commands_processed'] += 1
         
         try:
             print(f"🤖 Обрабатываю через AI: '{command}'")
             
+            # Прерываем текущую речь для новой команды
+            if self.tts.is_speaking:
+                print("⚡ Прерываю текущую речь для новой команды")
+                self.tts.stop_speech()
+            
             # Обрабатываем через AI ассистента
             if ai_assistant.is_available():
                 ai_result = ai_assistant.process_voice_message(command)
                 
-                # Произносим AI ответ
-                self.tts.speak(ai_result['response'])
+                # Произносим AI ответ с высоким приоритетом (прерывая предыдущую речь)
+                self.tts.speak_with_interruption(ai_result['response'])
                 
                 # Выполняем действие в зависимости от типа
                 if ai_result['action'] == 'command':
@@ -179,11 +184,8 @@ class VoiceAssistant:
                     print("🔄 AI недоступен, используем локальную обработку")
                     self._execute_local_command_analysis(command)
                 elif ai_result['action'] == 'chat':
-                    # Для обычного разговора убеждаемся что ответ произносится
-                    print(f"💬 Обычный разговор, произношу ответ: '{ai_result['response']}'")
-                    # AI ответ уже произнесен выше, но добавим дополнительную проверку
-                    if not self.tts.is_speaking:
-                        self.tts.speak(ai_result['response'])
+                    # Для обычного разговора ответ уже произнесен выше
+                    print(f"💬 Обычный разговор завершен")
                 
             else:
                 # Fallback к старой логике
@@ -421,11 +423,11 @@ class VoiceAssistant:
                         break
                 
                 if app_name:
-                    self.tts.speak(f"Открываю {app_name}")
+                    self.tts.speak_with_interruption(f"Открываю {app_name}")
                     result = system_orchestrator.execute_system_command("open_app", f'"{app_name}"')
                     if result['success']:
                         print(f"✅ Открыто: {app_name}")
-                        self.tts.speak("Готово")
+                        self.tts.speak("Готово", priority="normal")
                     else:
                         print(f"❌ Ошибка открытия {app_name}: {result.get('error')}")
                         self.tts.speak("Не удалось открыть приложение")
