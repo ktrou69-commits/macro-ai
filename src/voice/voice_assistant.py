@@ -16,6 +16,7 @@ from .text_to_speech import TextToSpeech, VoiceAssistantResponses
 # Импорты существующих модулей
 try:
     from src.system.system_orchestrator import system_orchestrator
+    from src.voice.ai_voice_integration import ai_assistant
     SYSTEM_ORCHESTRATOR_AVAILABLE = True
 except ImportError:
     SYSTEM_ORCHESTRATOR_AVAILABLE = False
@@ -155,20 +156,33 @@ class VoiceAssistant:
             print("🔇 Ключевое слово не обнаружено, игнорируем")
     
     def _process_voice_command(self, command: str):
-        """Обработка голосовой команды"""
+        """Обработка голосовой команды с AI"""
         self.stats['commands_processed'] += 1
         
         try:
-            # Подтверждаем получение команды
-            self.voice_responses.acknowledge_command(command)
+            print(f"🤖 Обрабатываю через AI: '{command}'")
             
-            # Определяем тип команды и выполняем
-            if self._is_simple_system_command(command):
-                self._execute_simple_system_command(command)
-            elif self._is_ai_command(command):
-                self._execute_ai_command(command)
+            # Обрабатываем через AI ассистента
+            if ai_assistant.is_available():
+                ai_result = ai_assistant.process_voice_message(command)
+                
+                # Произносим AI ответ
+                self.tts.speak(ai_result['response'])
+                
+                # Выполняем действие в зависимости от типа
+                if ai_result['action'] == 'command':
+                    self._execute_ai_system_command(ai_result)
+                elif ai_result['action'] == 'macro':
+                    self._execute_ai_macro_request(ai_result)
+                elif ai_result['response'] == "Извините, произошла ошибка. Попробуйте еще раз.":
+                    # AI недоступен, используем fallback
+                    print("🔄 AI недоступен, используем локальную обработку")
+                    self._execute_local_command_analysis(command)
+                # Для 'chat' просто произносим ответ
+                
             else:
-                self._execute_generic_command(command)
+                # Fallback к старой логике
+                self._execute_local_command_analysis(command)
             
             self.stats['successful_executions'] += 1
             
@@ -323,6 +337,118 @@ class VoiceAssistant:
             print(f"   🎤 Команд обработано: {self.stats['commands_processed']}")
             print(f"   ✅ Успешных выполнений: {self.stats['successful_executions']}")
             print(f"   ❌ Ошибок: {self.stats['errors']}")
+    
+    def _execute_ai_system_command(self, ai_result: Dict[str, Any]):
+        """Выполнение системной команды через AI"""
+        command = ai_result.get('command')
+        app_name = ai_result.get('app_name')
+        
+        if not command:
+            return
+        
+        try:
+            print(f"🔧 Выполняю команду: {command}")
+            if app_name:
+                print(f"📱 Приложение: {app_name}")
+            
+            if command in ['open_app', 'close_app']:
+                if app_name:
+                    result = system_orchestrator.execute_system_command(command, f'"{app_name}"')
+                else:
+                    print(f"❌ Команда {command} требует название приложения")
+                    return
+            else:
+                result = system_orchestrator.execute_system_command(command)
+            
+            if result['success']:
+                print(f"✅ Команда {command} выполнена: {result.get('message', 'Готово')}")
+                self.tts.speak("Готово")
+            else:
+                print(f"❌ Ошибка выполнения {command}: {result.get('error', 'Неизвестная ошибка')}")
+                self.tts.speak("Произошла ошибка при выполнении команды")
+                
+        except Exception as e:
+            print(f"❌ Ошибка выполнения AI команды: {e}")
+            self.tts.speak("Произошла ошибка")
+    
+    def _execute_ai_macro_request(self, ai_result: Dict[str, Any]):
+        """Обработка запроса на создание макроса через AI"""
+        macro_request = ai_result.get('macro_request')
+        
+        if not macro_request:
+            return
+        
+        print(f"🔧 Запрос на макрос: {macro_request}")
+        
+        # Здесь можно интегрировать с существующим AI генератором макросов
+        # Пока просто уведомляем пользователя
+        self.tts.speak("Функция создания макросов будет добавлена в следующей версии")
+    
+    def _execute_local_command_analysis(self, command: str):
+        """Локальная обработка команд без AI"""
+        command_lower = command.lower()
+        
+        # База приложений для локального анализа
+        app_mapping = {
+            'safari': 'Safari',
+            'хром': 'Google Chrome',
+            'chrome': 'Google Chrome',
+            'гугл хром': 'Google Chrome',
+            'калькулятор': 'Calculator',
+            'calculator': 'Calculator',
+            'терминал': 'Terminal',
+            'terminal': 'Terminal',
+            'файндер': 'Finder',
+            'finder': 'Finder',
+            'заметки': 'Notes',
+            'notes': 'Notes',
+            'телеграм': 'Telegram',
+            'telegram': 'Telegram'
+        }
+        
+        try:
+            if any(word in command_lower for word in ["открой", "запусти", "открыть", "запустить"]):
+                # Команда открытия приложения
+                app_name = None
+                for russian_name, english_name in app_mapping.items():
+                    if russian_name in command_lower:
+                        app_name = english_name
+                        break
+                
+                if app_name:
+                    self.tts.speak(f"Открываю {app_name}")
+                    result = system_orchestrator.execute_system_command("open_app", f'"{app_name}"')
+                    if result['success']:
+                        print(f"✅ Открыто: {app_name}")
+                        self.tts.speak("Готово")
+                    else:
+                        print(f"❌ Ошибка открытия {app_name}: {result.get('error')}")
+                        self.tts.speak("Не удалось открыть приложение")
+                else:
+                    self.tts.speak("Не могу определить какое приложение открыть")
+                    
+            elif any(word in command_lower for word in ["скриншот", "снимок"]):
+                self.tts.speak("Делаю скриншот")
+                result = system_orchestrator.execute_system_command("take_screenshot")
+                if result['success']:
+                    print(f"✅ Скриншот создан")
+                    self.tts.speak("Скриншот готов")
+                else:
+                    self.tts.speak("Не удалось сделать скриншот")
+                    
+            elif any(word in command_lower for word in ["процессы", "приложения"]):
+                self.tts.speak("Показываю процессы")
+                result = system_orchestrator.execute_system_command("list_processes")
+                if result['success']:
+                    self.tts.speak("Список процессов готов")
+                    
+            else:
+                # Обычный разговор
+                self.tts.speak("Понял, но не знаю как это выполнить")
+                
+        except Exception as e:
+            print(f"❌ Ошибка локальной обработки: {e}")
+            self.tts.speak("Произошла ошибка")
     
     def process_text_command(self, command: str):
         """Обработка текстовой команды (для тестирования)"""
