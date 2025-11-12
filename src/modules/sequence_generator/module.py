@@ -30,6 +30,14 @@ from .prompts.examples import AIExamples, ExampleSelector
 from .validators.dsl_validator import DSLValidator, DSLFormatter
 from .validators.semantic_validator import SemanticValidator
 
+# Компоненты для многошаговых макросов (Часть 3)
+from .dsl.conditions import Condition, ConditionalBlock, ConditionParser, ConditionEvaluator
+from .dsl.loops import LoopBlock, RepeatLoop, WhileLoop, ForEachLoop, LoopParser, LoopExecutor
+from .dsl.variables import VariableManager, VariableParser, VariableValidator
+from .parsers.enhanced_dsl_parser import EnhancedDSLParser, ParsedDSL, DSLOptimizer
+from .executors.enhanced_executor import EnhancedExecutor, ExecutionResult, ExecutionStatus
+from .prompts.advanced_prompts import AdvancedPrompts, ComplexityAnalyzer
+
 
 class SequenceGeneratorModule(AIModule):
     """Модуль генерации DSL последовательностей"""
@@ -96,6 +104,9 @@ class SequenceGeneratorModule(AIModule):
             # Инициализация компонентов Части 2: Улучшенный AI и валидация
             self._initialize_ai_enhancement_components()
             
+            # Инициализация компонентов Части 3: Многошаговые макросы
+            self._initialize_complex_macro_components()
+            
         except Exception as e:
             self.logger.error(f"❌ Ошибка инициализации расширенных компонентов: {e}")
             # Fallback к None для graceful degradation
@@ -133,6 +144,40 @@ class SequenceGeneratorModule(AIModule):
             self.dsl_validator = None
             self.semantic_validator = None
             self.dsl_formatter = None
+    
+    def _initialize_complex_macro_components(self):
+        """Инициализация компонентов для многошаговых макросов (Часть 3)"""
+        try:
+            # Инициализация расширенного DSL парсера
+            self.enhanced_dsl_parser = EnhancedDSLParser()
+            self.dsl_optimizer = DSLOptimizer()
+            self.logger.info("✅ Enhanced DSL Parser инициализирован")
+            
+            # Инициализация расширенного исполнителя
+            self.enhanced_executor = EnhancedExecutor()
+            self.logger.info("✅ Enhanced Executor инициализирован")
+            
+            # Инициализация продвинутых промптов
+            self.advanced_prompts = AdvancedPrompts()
+            self.complexity_analyzer = ComplexityAnalyzer()
+            self.logger.info("✅ Advanced Prompts инициализированы")
+            
+            # Инициализация компонентов DSL
+            self.condition_parser = ConditionParser()
+            self.loop_parser = LoopParser()
+            self.variable_parser = VariableParser()
+            self.logger.info("✅ DSL компоненты (условия, циклы, переменные) инициализированы")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Ошибка инициализации компонентов многошаговых макросов: {e}")
+            # Fallback к None для graceful degradation
+            self.enhanced_dsl_parser = None
+            self.enhanced_executor = None
+            self.advanced_prompts = None
+            self.complexity_analyzer = None
+            self.condition_parser = None
+            self.loop_parser = None
+            self.variable_parser = None
     
     def get_context_resources(self) -> Dict[str, Any]:
         """Загружает ресурсы для контекста (интеграция с существующей системой)"""
@@ -181,9 +226,11 @@ class SequenceGeneratorModule(AIModule):
         self.logger.info(f"Начало выполнения: {user_input[:50]}...")
         
         try:
-            # 1. Анализ намерений пользователя
+            # 1. Анализ намерений пользователя и сложности
             intent = self._analyze_user_intent(user_input)
+            complexity_analysis = self._analyze_complexity(user_input)
             self.logger.info(f"Анализ намерений: {intent['type']} (confidence: {intent['confidence']})")
+            self.logger.info(f"Анализ сложности: {complexity_analysis['complexity_level']} (требует расширенные возможности: {complexity_analysis['requires_advanced_features']})")
             
             # 2. Попытка генерации через расширенные возможности
             enhanced_dsl = None
@@ -192,14 +239,21 @@ class SequenceGeneratorModule(AIModule):
                 if enhanced_dsl:
                     self.logger.info(f"Использована расширенная генерация для {intent['type']}")
             
-            # 3. Если расширенная генерация не сработала, используем улучшенный AI
+            # 3. Если расширенная генерация не сработала, используем AI (Части 2 и 3)
             if not enhanced_dsl:
-                # Формирование улучшенного промпта с контекстом (Часть 2)
-                full_prompt = self._build_enhanced_prompt(user_input, intent, context)
+                # Выбор типа промпта на основе сложности
+                if complexity_analysis['requires_advanced_features']:
+                    # Используем продвинутые промпты для сложных макросов (Часть 3)
+                    full_prompt = self._build_complex_macro_prompt(user_input, intent, complexity_analysis, context)
+                    self.logger.info("Используется продвинутый AI промпт для сложного макроса")
+                else:
+                    # Используем улучшенные промпты (Часть 2)
+                    full_prompt = self._build_enhanced_prompt(user_input, intent, context)
+                    self.logger.info("Используется улучшенный AI промпт")
                 
                 # AI генерация результата
                 ai_result = self.ai_agent.generate(full_prompt, context)
-                self.logger.info("Улучшенная AI генерация завершена")
+                self.logger.info("AI генерация завершена")
                 
                 # Парсинг AI результата
                 parsed_result = self.parse_ai_result(ai_result)
@@ -221,8 +275,8 @@ class SequenceGeneratorModule(AIModule):
                     "intent": intent
                 }
             
-            # 4. Валидация и улучшение DSL кода (Часть 2)
-            validated_dsl, validation_info = self._validate_and_improve_dsl(dsl_code, context)
+            # 4. Валидация и улучшение DSL кода (Части 2 и 3)
+            validated_dsl, validation_info = self._validate_and_improve_dsl(dsl_code, context, complexity_analysis)
             if validated_dsl != dsl_code:
                 dsl_code = validated_dsl
                 self.logger.info("DSL код улучшен после валидации")
@@ -946,3 +1000,190 @@ class SequenceGeneratorModule(AIModule):
         except Exception as e:
             self.logger.error(f"Ошибка валидации DSL: {e}")
             return dsl_code, validation_info
+    
+    def _analyze_complexity(self, user_input: str) -> Dict[str, Any]:
+        """
+        Анализ сложности пользовательского запроса (Часть 3)
+        
+        Args:
+            user_input: Запрос пользователя
+            
+        Returns:
+            Результат анализа сложности
+        """
+        try:
+            if self.complexity_analyzer:
+                return self.complexity_analyzer.analyze_request_complexity(user_input)
+            else:
+                # Fallback анализ
+                return {
+                    "complexity_level": "medium",
+                    "requires_advanced_features": False,
+                    "recommended_prompt": "basic_macro"
+                }
+        except Exception as e:
+            self.logger.error(f"Ошибка анализа сложности: {e}")
+            return {
+                "complexity_level": "medium",
+                "requires_advanced_features": False,
+                "recommended_prompt": "basic_macro"
+            }
+    
+    def _build_complex_macro_prompt(self, user_input: str, intent: Dict[str, Any], 
+                                   complexity_analysis: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """
+        Построение продвинутого промпта для сложных макросов (Часть 3)
+        
+        Args:
+            user_input: Запрос пользователя
+            intent: Анализ намерений
+            complexity_analysis: Анализ сложности
+            context: Контекст выполнения
+            
+        Returns:
+            Продвинутый промпт для AI
+        """
+        try:
+            if not self.advanced_prompts:
+                # Fallback к улучшенному промпту
+                return self._build_enhanced_prompt(user_input, intent, context)
+            
+            # Определяем тип сложности
+            complexity_level = complexity_analysis.get('recommended_prompt', 'complex_macro')
+            
+            # Строим контекст для продвинутого промпта
+            advanced_context = {
+                'user_request': user_input,
+                'context': self._build_advanced_context(intent, context),
+                'complexity_info': complexity_analysis
+            }
+            
+            # Получаем продвинутый промпт
+            advanced_prompt = self.advanced_prompts.get_advanced_prompt(complexity_level, advanced_context)
+            
+            # Добавляем примеры если доступны
+            enhanced_prompt = self.advanced_prompts.enhance_prompt_with_examples(advanced_prompt, user_input)
+            
+            self.logger.info(f"Построен продвинутый промпт: {complexity_level}")
+            return enhanced_prompt
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка построения продвинутого промпта: {e}")
+            return self._build_enhanced_prompt(user_input, intent, context)
+    
+    def _build_advanced_context(self, intent: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """Построение расширенного контекста для продвинутых промптов"""
+        context_parts = []
+        
+        # Добавляем информацию о намерениях
+        context_parts.append(f"Тип задачи: {intent.get('type', 'general')}")
+        if intent.get('confidence'):
+            context_parts.append(f"Уверенность: {intent['confidence']}")
+        
+        # Добавляем доступные ресурсы
+        if self.system_app_handler:
+            apps = list(self.system_app_handler.get_all_system_apps().keys())[:5]
+            context_parts.append(f"Доступные приложения: {', '.join(apps)}")
+        
+        if self.web_selector_manager:
+            sites = list(self.web_selector_manager.get_all_sites().keys())[:5]
+            context_parts.append(f"Поддерживаемые сайты: {', '.join(sites)}")
+        
+        return "; ".join(context_parts)
+    
+    def _validate_and_improve_dsl(self, dsl_code: str, context: Dict[str, Any], 
+                                 complexity_analysis: Dict[str, Any] = None) -> tuple:
+        """
+        Расширенная валидация DSL с поддержкой сложных конструкций (Части 2 и 3)
+        
+        Args:
+            dsl_code: DSL код для валидации
+            context: Контекст выполнения
+            complexity_analysis: Анализ сложности (опционально)
+            
+        Returns:
+            tuple: (улучшенный_dsl_код, информация_о_валидации)
+        """
+        validation_info = {
+            'syntax_validation': None,
+            'semantic_validation': None,
+            'complex_validation': None,
+            'improvements_applied': [],
+            'warnings': [],
+            'suggestions': []
+        }
+        
+        improved_dsl = dsl_code
+        
+        try:
+            # Проверяем, нужна ли расширенная валидация
+            requires_advanced = complexity_analysis and complexity_analysis.get('requires_advanced_features', False)
+            
+            if requires_advanced and self.enhanced_dsl_parser:
+                # Используем расширенную валидацию для сложных макросов
+                parsed_dsl = self.enhanced_dsl_parser.parse(improved_dsl)
+                validation_info['complex_validation'] = {
+                    'errors': parsed_dsl.errors,
+                    'warnings': parsed_dsl.warnings,
+                    'metadata': parsed_dsl.metadata
+                }
+                
+                if parsed_dsl.errors:
+                    validation_info['warnings'].extend([f"Сложная валидация: {error}" for error in parsed_dsl.errors])
+                else:
+                    # Оптимизируем DSL если возможно
+                    if self.dsl_optimizer:
+                        optimized_dsl = self.dsl_optimizer.optimize(parsed_dsl)
+                        # TODO: Преобразование обратно в строку
+                        validation_info['improvements_applied'].append("Применена оптимизация сложных конструкций")
+                
+                self.logger.info("Применена расширенная валидация для сложного макроса")
+            
+            else:
+                # Используем стандартную валидацию (Часть 2)
+                if self.dsl_validator:
+                    syntax_result = self.dsl_validator.validate_dsl(improved_dsl, auto_fix=True)
+                    validation_info['syntax_validation'] = syntax_result
+                    
+                    if syntax_result.fixed_code:
+                        improved_dsl = syntax_result.fixed_code
+                        validation_info['improvements_applied'].extend(syntax_result.fixes_applied)
+                    
+                    validation_info['warnings'].extend(syntax_result.warnings)
+                    validation_info['suggestions'].extend(syntax_result.suggestions)
+                
+                # Семантическая валидация
+                if self.semantic_validator:
+                    semantic_result = self.semantic_validator.validate_semantics(improved_dsl, context)
+                    validation_info['semantic_validation'] = semantic_result
+                    
+                    validation_info['warnings'].extend(semantic_result.warnings)
+                    validation_info['suggestions'].extend(semantic_result.suggestions)
+            
+            # Форматирование кода
+            if self.dsl_formatter and improved_dsl != dsl_code:
+                formatted_dsl = self.dsl_formatter.format_dsl(improved_dsl)
+                if formatted_dsl != improved_dsl:
+                    improved_dsl = formatted_dsl
+                    validation_info['improvements_applied'].append("Код отформатирован для лучшей читаемости")
+            
+            return improved_dsl, validation_info
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка расширенной валидации DSL: {e}")
+            # Fallback к базовой валидации
+            return self._validate_and_improve_dsl_basic(dsl_code, context)
+    
+    def _validate_and_improve_dsl_basic(self, dsl_code: str, context: Dict[str, Any]) -> tuple:
+        """Базовая валидация DSL (fallback)"""
+        validation_info = {
+            'improvements_applied': [],
+            'warnings': [],
+            'suggestions': []
+        }
+        
+        # Минимальная валидация
+        if not dsl_code or not dsl_code.strip():
+            validation_info['warnings'].append("DSL код пустой")
+        
+        return dsl_code, validation_info
