@@ -1,0 +1,44 @@
+# Голосовые зависимости для Voice Assistant - Этап 5
+# Добавляются к основным requirements.txt
+
+# === РАСПОЗНАВАНИЕ РЕЧИ ===
+# OpenAI Whisper - высокое качество, локально
+openai-whisper>=20231117
+
+# SpeechRecognition - простая интеграция с Google/Sphinx
+SpeechRecognition>=3.10.0
+
+# PyAudio - для записи с микрофона
+pyaudio>=0.2.11
+
+# === СИНТЕЗ РЕЧИ ===
+# pyttsx3 - кроссплатформенный TTS
+pyttsx3>=2.90
+
+# === ОБНАРУЖЕНИЕ АКТИВАЦИИ (опционально) ===
+# Porcupine - hotword detection
+pvporcupine>=3.0.0
+
+# WebRTC VAD - voice activity detection
+webrtcvad>=2.0.10
+
+# === MACOS СИСТЕМНЫЕ API ===
+# PyObjC для работы с macOS API
+pyobjc-framework-Cocoa>=10.0
+pyobjc-framework-ApplicationServices>=10.0
+pyobjc-framework-Quartz>=10.0
+
+# === ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ ===
+# Для работы с аудио форматами
+wave>=0.0.2
+
+# Для мониторинга производительности
+psutil>=5.9.0
+
+# === ОПЦИОНАЛЬНЫЕ ЗАВИСИМОСТИ ===
+# Torch для Whisper (если не установлен)
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# NumPy для обработки аудио
+numpy>=1.24.0
