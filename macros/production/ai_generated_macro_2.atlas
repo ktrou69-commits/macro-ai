@@ -1,0 +1,16 @@
+open ChromeApp
+wait 2s
+click ChromeNewTab
+wait 1s
+click ChromeSearchField
+wait 1s
+type "calculator"
+wait 0.5s
+press enter
+wait 5s
+click ChromeSearchField
+wait 1s
+type "15 * 8"
+wait 0.5s
+press enter
+wait 5s

@@ -114,9 +114,10 @@ class SystemAppHandler:
         launch_command = app_info.get('launch_command', '')
         app_name = app_info.get('app_name', 'Unknown')
         
+        # Используем правильный формат для системных команд
         return f"""# Запуск {app_name}
 # {description}
-system_command "{launch_command}"
+@system open_app "{app_name}"
 wait 2s"""
     
     def _generate_spotlight_launch_dsl(self, app_name: str, description: str) -> str:

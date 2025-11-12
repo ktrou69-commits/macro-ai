@@ -232,15 +232,11 @@ class SequenceGeneratorModule(AIModule):
             self.logger.info(f"Анализ намерений: {intent['type']} (confidence: {intent['confidence']})")
             self.logger.info(f"Анализ сложности: {complexity_analysis['complexity_level']} (требует расширенные возможности: {complexity_analysis['requires_advanced_features']})")
             
-            # 2. Попытка генерации через расширенные возможности
+            # 2. Всегда используем AI генерацию с правильными промптами (отключаем старую расширенную генерацию)
             enhanced_dsl = None
-            if intent["confidence"] > 0.6:
-                enhanced_dsl = self._generate_enhanced_dsl(user_input, intent)
-                if enhanced_dsl:
-                    self.logger.info(f"Использована расширенная генерация для {intent['type']}")
             
-            # 3. Если расширенная генерация не сработала, используем AI (Части 2 и 3)
-            if not enhanced_dsl:
+            # 3. Используем AI генерацию с детальным анализом намерений (Части 2 и 3)
+            if True:  # Всегда используем AI
                 # Выбор типа промпта на основе сложности
                 if complexity_analysis['requires_advanced_features']:
                     # Используем продвинутые промпты для сложных макросов (Часть 3)
@@ -306,6 +302,23 @@ class SequenceGeneratorModule(AIModule):
             
             if execution_result:
                 result_data["execution_result"] = execution_result.to_dict()
+            
+            # Добавляем дополнительную информацию для интеграции с main.py
+            result_data.update({
+                "success": True,
+                "filepath": saved_file,
+                "dsl_code": dsl_code,
+                "complexity_analysis": complexity_analysis,
+                "validation_info": validation_info
+            })
+            
+            # Добавляем статистику DSL если доступен enhanced parser
+            if hasattr(self, 'enhanced_dsl_parser') and self.enhanced_dsl_parser:
+                try:
+                    parsed_dsl = self.enhanced_dsl_parser.parse(dsl_code)
+                    result_data["dsl_stats"] = parsed_dsl.metadata
+                except:
+                    pass
             
             result = ModuleResult(
                 success=True,
@@ -695,55 +708,90 @@ class SequenceGeneratorModule(AIModule):
             return {}
     
     def _analyze_user_intent(self, user_input: str) -> Dict[str, Any]:
-        """Анализ намерений пользователя для выбора типа автоматизации"""
-        intent = {
-            "type": "general",  # general, system_app, web, spotlight
-            "target_app": None,
-            "target_site": None,
-            "action": None,
-            "confidence": 0.5
-        }
-        
-        user_lower = user_input.lower()
-        
-        # Проверка на системные приложения
-        if self.system_app_handler:
-            for app_name in self.system_app_handler.get_all_system_apps():
-                app_keywords = self.system_app_handler.get_app_keywords(app_name)
-                if any(keyword.lower() in user_lower for keyword in app_keywords):
-                    intent["type"] = "system_app"
-                    intent["target_app"] = app_name
-                    intent["confidence"] = 0.8
-                    break
-        
-        # Проверка на веб-сайты
-        if self.web_selector_manager and intent["type"] == "general":
-            matching_sites = self.web_selector_manager.identify_site_from_keywords(user_input)
-            if matching_sites:
-                intent["type"] = "web"
-                intent["target_site"] = matching_sites[0]
-                intent["confidence"] = 0.7
-        
-        # Проверка на Spotlight поиск
-        spotlight_keywords = ["найди", "поиск", "spotlight", "спотлайт", "найти"]
-        if any(keyword in user_lower for keyword in spotlight_keywords):
-            intent["type"] = "spotlight"
-            intent["confidence"] = 0.6
-        
-        # Определение действия
-        action_keywords = {
-            "open": ["открой", "запусти", "открыть", "запустить", "open", "launch"],
-            "search": ["найди", "поиск", "найти", "search", "find"],
-            "click": ["кликни", "нажми", "click", "press"],
-            "type": ["введи", "напиши", "type", "write"]
-        }
-        
-        for action, keywords in action_keywords.items():
-            if any(keyword in user_lower for keyword in keywords):
-                intent["action"] = action
-                break
-        
-        return intent
+        """Детальный анализ намерений пользователя с использованием улучшенной системы"""
+        try:
+            # Используем детальный анализ намерений
+            from src.ai.module_descriptions import analyze_request
+            detailed_analysis = analyze_request(user_input)
+            
+            # Преобразуем результат в старый формат для совместимости
+            subcategory = detailed_analysis.get('subcategory', 'system_automation')
+            
+            # Маппинг подкатегорий в старые типы
+            type_mapping = {
+                'web_automation': 'web',
+                'system_automation': 'system_app', 
+                'spotlight_automation': 'spotlight',
+                'calculator_automation': 'system_app'
+            }
+            
+            intent_type = type_mapping.get(subcategory, 'general')
+            
+            # Определяем целевое приложение/сайт
+            target_app = None
+            target_site = None
+            
+            if subcategory == 'web_automation':
+                # Определяем веб-сайт из запроса
+                user_lower = user_input.lower()
+                web_sites = ['youtube', 'google', 'twitter', 'facebook', 'instagram', 
+                           'linkedin', 'github', 'amazon', 'netflix']
+                for site in web_sites:
+                    if site in user_lower:
+                        target_site = site
+                        break
+            
+            elif subcategory in ['system_automation', 'calculator_automation']:
+                # Определяем системное приложение
+                user_lower = user_input.lower()
+                if 'калькулятор' in user_lower or 'calculator' in user_lower:
+                    target_app = 'Calculator'
+                elif 'finder' in user_lower:
+                    target_app = 'Finder'
+                elif 'safari' in user_lower:
+                    target_app = 'Safari'
+            
+            # Определение действия (совместимость)
+            action = None
+            user_lower = user_input.lower()
+            if any(word in user_lower for word in ['открой', 'запусти', 'open']):
+                action = 'open'
+            elif any(word in user_lower for word in ['найди', 'поиск', 'search']):
+                action = 'search'
+            elif any(word in user_lower for word in ['кликни', 'нажми', 'click']):
+                action = 'click'
+            elif any(word in user_lower for word in ['введи', 'напиши', 'type']):
+                action = 'type'
+            
+            intent = {
+                "type": intent_type,
+                "target_app": target_app,
+                "target_site": target_site,
+                "action": action,
+                "confidence": detailed_analysis.get('confidence', 0.5),
+                # Дополнительная информация из детального анализа
+                "subcategory": subcategory,
+                "matched_triggers": detailed_analysis.get('matched_triggers', []),
+                "expected_commands": detailed_analysis.get('expected_commands', []),
+                "analysis_method": detailed_analysis.get('analysis_method', 'detailed')
+            }
+            
+            return intent
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка детального анализа намерений: {e}")
+            # Fallback на простой анализ
+            return {
+                "type": "general",
+                "target_app": None,
+                "target_site": None,
+                "action": None,
+                "confidence": 0.3,
+                "subcategory": "system_automation",
+                "matched_triggers": [],
+                "expected_commands": [],
+                "analysis_method": "fallback"
+            }
     
     def _generate_enhanced_dsl(self, user_input: str, intent: Dict[str, Any]) -> str:
         """Генерация DSL с использованием расширенных возможностей"""
@@ -879,7 +927,24 @@ class SequenceGeneratorModule(AIModule):
             return self.build_prompt(user_input, context)
     
     def _map_intent_to_prompt_type(self, intent_type: str, intent: Dict[str, Any]) -> str:
-        """Маппинг типа намерения на тип промпта"""
+        """Маппинг типа намерения на тип промпта с использованием детального анализа"""
+        
+        # Используем подкатегорию из детального анализа если доступна
+        subcategory = intent.get('subcategory')
+        if subcategory:
+            # Прямой маппинг подкатегорий на типы промптов
+            subcategory_mapping = {
+                'web_automation': 'web_automation',
+                'system_automation': 'system_automation', 
+                'spotlight_automation': 'spotlight_automation',
+                'calculator_automation': 'calculator_automation'
+            }
+            
+            mapped_type = subcategory_mapping.get(subcategory)
+            if mapped_type:
+                return mapped_type
+        
+        # Fallback на старый маппинг
         mapping = {
             'web': 'web_automation',
             'system_app': 'system_automation',
@@ -1187,3 +1252,28 @@ class SequenceGeneratorModule(AIModule):
             validation_info['warnings'].append("DSL код пустой")
         
         return dsl_code, validation_info
+    
+    def generate_and_save(self, user_input: str) -> Dict[str, Any]:
+        """
+        Простой интерфейс для интеграции с main.py
+        Возвращает результат в формате, ожидаемом основным приложением
+        """
+        try:
+            # Выполняем через основной метод
+            module_result = self.execute(user_input)
+            
+            if module_result.success:
+                # Возвращаем данные в формате, ожидаемом main.py
+                return module_result.data
+            else:
+                return {
+                    "success": False,
+                    "error": module_result.error or "Неизвестная ошибка генерации"
+                }
+                
+        except Exception as e:
+            self.logger.error(f"Ошибка в generate_and_save: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }

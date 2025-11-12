@@ -1,0 +1,8 @@
+# Test Selenium Commands
+selenium_init url=https://www.google.com
+wait 2s
+selenium_type selector="input[name='q']" text="test"
+wait 1s
+selenium_click selector="input[name='btnK']"
+wait 2s
+selenium_close

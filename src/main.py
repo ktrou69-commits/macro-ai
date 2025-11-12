@@ -412,7 +412,7 @@ wait 3s
     # ========== РАЗДЕЛ 4: AI ГЕНЕРАТОР ==========
     
     def menu_ai_generator(self):
-        """Меню AI генератора макросов"""
+        """🚀 НОВЫЙ УЛУЧШЕННЫЙ AI ГЕНЕРАТОР МАКРОСОВ (Модульная архитектура)"""
         if not AI_AVAILABLE:
             self.print_header()
             print("❌ AI генератор недоступен")
@@ -424,15 +424,28 @@ wait 3s
             return
         
         self.print_header()
-        print("🤖 AI ГЕНЕРАТОР МАКРОСОВ")
-        print("-" * 80)
+        print("🚀 УЛУЧШЕННЫЙ AI ГЕНЕРАТОР МАКРОСОВ")
+        print("=" * 80)
+        print("✨ Новые возможности:")
+        print("  🧠 Умный анализ намерений (system/web/spotlight)")
+        print("  🤖 Контекстно-зависимые AI промпты")
+        print("  📚 Обучение на примерах (Few-Shot Learning)")
+        print("  🔍 Автоматическая валидация и исправление DSL")
+        print("  📝 Поддержка условий, циклов и переменных")
+        print("  ⚡ Graceful degradation при ошибках")
+        print("=" * 80)
         print()
         print("Опишите что должен делать макрос, и AI создаст его автоматически!")
         print()
-        print("Примеры:")
-        print("  • 'открыть YouTube и поставить лайк'")
-        print("  • 'зайти на TikTok и пролистать 5 видео'")
-        print("  • 'открыть Chrome, перейти на google.com и найти Python'")
+        print("🎯 Примеры простых макросов:")
+        print("  • 'открой калькулятор и посчитай 25 * 17'")
+        print("  • 'найди на YouTube видео про Python'")
+        print("  • 'найди файлы PDF через Spotlight'")
+        print()
+        print("🤖 Примеры сложных макросов:")
+        print("  • 'создай макрос для автоматической покупки товаров с проверкой цен'")
+        print("  • 'автоматизируй отправку писем списку контактов с персонализацией'")
+        print("  • 'создай макрос с условиями и циклами для обработки данных'")
         print()
         print("-" * 80)
         print()
@@ -442,62 +455,166 @@ wait 3s
         if not user_input or user_input == "0":
             return
         
-        # Создаем генератор
-        generator = AIMacroGenerator(self.project_root)
-        
-        # Генерируем и сохраняем
-        filepath = generator.generate_and_save(user_input)
-        
-        if not filepath:
-            input("\nНажмите Enter для продолжения...")
-            return
-        
-        # Предлагаем сохранить как переменную
-        print()
-        print("=" * 80)
-        print(f"✅ Ваша новая последовательность создана: {filepath.stem}")
-        print("=" * 80)
-        print()
-        
-        # Читаем сгенерированный код
-        with open(filepath, 'r', encoding='utf-8') as f:
-            dsl_code = f.read()
-        
-        # Предлагаем сохранить как переменную
-        save_as_var = input("💡 Сохранить как переменную для повторного использования? (y/n): ").strip().lower()
-        
-        if save_as_var == 'y':
-            from src.ai.variable_generator import AIVariableGenerator
-            var_generator = AIVariableGenerator(self.project_root)
+        try:
+            # 🚀 ИСПОЛЬЗУЕМ НОВЫЙ МОДУЛЬНЫЙ ГЕНЕРАТОР
+            print("\n🔄 Инициализация улучшенного AI генератора...")
             
-            print("\n🔄 Создание переменной...")
-            variable = var_generator.generate_variable(user_input, dsl_code)
+            from src.modules.sequence_generator.module import SequenceGeneratorModule
+            generator = SequenceGeneratorModule()
             
-            print(f"\n💡 Предлагаемое название: ${{{variable['name']}}}")
-            custom_name = input("   Или введите свое (Enter = использовать предложенное): ").strip()
+            print("✅ Модуль инициализирован")
+            print(f"🧠 Анализирую запрос: '{user_input}'")
             
-            if custom_name and custom_name[0].isupper():
-                variable['name'] = custom_name
+            # Генерируем макрос с новыми возможностями
+            result = generator.generate_and_save(user_input)
             
-            if var_generator.save_variable(variable):
-                print(f"\n✅ Переменная ${{{variable['name']}}} сохранена!")
-                print("   Теперь AI сможет использовать её в будущих генерациях!")
+            if not result or not result.get('success'):
+                print("❌ Не удалось сгенерировать макрос")
+                if result and result.get('error'):
+                    print(f"   Ошибка: {result['error']}")
+                input("\nНажмите Enter для продолжения...")
+                return
+            
+            # Получаем информацию о результате
+            filepath = result.get('filepath')
+            dsl_code = result.get('dsl_code', '')
+            intent_info = result.get('intent_analysis', {})
+            complexity_info = result.get('complexity_analysis', {})
+            
+            print()
+            print("=" * 80)
+            print("✅ МАКРОС УСПЕШНО СОЗДАН С НОВЫМИ ВОЗМОЖНОСТЯМИ!")
+            print("=" * 80)
+            
+            # Показываем анализ
+            if intent_info:
+                print(f"🧠 Тип намерения: {intent_info.get('type', 'unknown')} (уверенность: {intent_info.get('confidence', 0)})")
+            
+            if complexity_info:
+                print(f"📊 Сложность: {complexity_info.get('complexity_level', 'unknown')}")
+                print(f"🔧 Использованы расширенные возможности: {complexity_info.get('requires_advanced_features', False)}")
+            
+            if filepath:
+                print(f"📁 Файл сохранен: {filepath.stem if hasattr(filepath, 'stem') else filepath}")
+            
+            # Показываем статистику DSL
+            if result.get('dsl_stats'):
+                stats = result['dsl_stats']
+                print(f"📋 Статистика DSL:")
+                print(f"   - Блоков: {stats.get('total_blocks', 0)}")
+                print(f"   - Условия: {'✅' if stats.get('has_conditionals') else '❌'}")
+                print(f"   - Циклы: {'✅' if stats.get('has_loops') else '❌'}")
+                print(f"   - Переменные: {stats.get('variable_count', 0)}")
+            
+            print()
+            
+            # Показываем DSL код если он короткий
+            if dsl_code and len(dsl_code) < 500:
+                print("📝 Сгенерированный DSL код:")
+                print("-" * 40)
+                print(dsl_code)
+                print("-" * 40)
+            elif dsl_code:
+                print("📝 DSL код сгенерирован (слишком длинный для отображения)")
+            
+        except ImportError as e:
+            print("⚠️ Новый модуль недоступен, используем старый генератор...")
+            print(f"   Ошибка импорта: {e}")
+            
+            # Fallback к старому генератору
+            generator = AIMacroGenerator(self.project_root)
+            filepath = generator.generate_and_save(user_input)
+            
+            if not filepath:
+                input("\nНажмите Enter для продолжения...")
+                return
+            
+            print()
+            print("=" * 80)
+            print(f"✅ Макрос создан (старый генератор): {filepath.stem}")
+            print("=" * 80)
+            
+            # Читаем сгенерированный код
+            with open(filepath, 'r', encoding='utf-8') as f:
+                dsl_code = f.read()
+        
+        except Exception as e:
+            print(f"❌ Ошибка генерации: {e}")
+            print("🔄 Попробуем использовать старый генератор...")
+            
+            try:
+                # Fallback к старому генератору
+                generator = AIMacroGenerator(self.project_root)
+                filepath = generator.generate_and_save(user_input)
+                
+                if not filepath:
+                    input("\nНажмите Enter для продолжения...")
+                    return
+                
+                print()
+                print("=" * 80)
+                print(f"✅ Макрос создан (fallback): {filepath.stem}")
+                print("=" * 80)
+                
+                # Читаем сгенерированный код
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    dsl_code = f.read()
+                    
+            except Exception as fallback_error:
+                print(f"❌ Критическая ошибка: {fallback_error}")
+                input("\nНажмите Enter для продолжения...")
+                return
+        
+        # Предлагаем сохранить как переменную (только если есть старый функционал)
+        try:
+            save_as_var = input("\n💡 Сохранить как переменную для повторного использования? (y/n): ").strip().lower()
+            
+            if save_as_var == 'y':
+                from src.ai.variable_generator import AIVariableGenerator
+                var_generator = AIVariableGenerator(self.project_root)
+                
+                print("\n🔄 Создание переменной...")
+                variable = var_generator.generate_variable(user_input, dsl_code)
+                
+                print(f"\n💡 Предлагаемое название: ${{{variable['name']}}}")
+                custom_name = input("   Или введите свое (Enter = использовать предложенное): ").strip()
+                
+                if custom_name and custom_name[0].isupper():
+                    variable['name'] = custom_name
+                
+                if var_generator.save_variable(variable):
+                    print(f"\n✅ Переменная ${{{variable['name']}}} сохранена!")
+                    print("   Теперь AI сможет использовать её в будущих генерациях!")
+        except:
+            print("⚠️ Функция переменных недоступна")
         
         print()
         print("Что дальше?")
         print("  1. Запустить эту последовательность")
-        print("  2. Посмотреть все последовательности")
+        print("  2. Посмотреть все последовательности") 
+        print("  3. Создать еще один макрос")
         print("  0. Вернуться в главное меню")
         print()
         
-        choice = self.get_choice(2)
+        choice = self.get_choice(3)
         
         if choice == 1:
             # Запускаем созданный макрос
-            self.run_atlas_macro(filepath)
+            if 'filepath' in locals() and filepath:
+                # Преобразуем строку в Path объект если нужно
+                from pathlib import Path
+                if isinstance(filepath, str):
+                    filepath = Path(filepath)
+                self.run_atlas_macro(filepath)
+            else:
+                print("❌ Файл макроса не найден")
+                input("Нажмите Enter для продолжения...")
         elif choice == 2:
             # Показываем все макросы
             self.menu_dsl_collection()
+        elif choice == 3:
+            # Создаем еще один макрос
+            self.menu_ai_generator()
     
     # ========== РАЗДЕЛ 5: АВТОМАТИЗАЦИЯ ПРОЦЕССОВ (AI) ==========
     

@@ -15,15 +15,14 @@ class ContextAwarePrompts:
         "web_automation": """
 Ты эксперт по веб-автоматизации. Создай DSL макрос для веб-браузера.
 
-ДОСТУПНЫЕ WEB КОМАНДЫ:
-- navigate "url" - переход на страницу
-- click_element "selector" - клик по элементу
-- fill_field "selector" "text" - заполнение поля
-- wait_for_element "selector" - ожидание элемента
-- scroll_to "selector" - прокрутка к элементу
-- hover_element "selector" - наведение на элемент
-- switch_tab "tab_index" - переключение вкладки
-- close_tab - закрытие текущей вкладки
+ДОСТУПНЫЕ WEB КОМАНДЫ (через Selenium):
+- selenium_init url=https://site.com - инициализация браузера и переход на URL
+- selenium_find selector="#element_id" save_to=var_name - поиск элемента
+- selenium_click selector="#element_id" - клик по элементу
+- selenium_type selector="#input_field" text="текст" - заполнение поля
+- selenium_scroll direction=down amount=3 - прокрутка страницы
+- selenium_close - закрытие браузера
+- wait 3s - ожидание загрузки
 
 СПЕЦИАЛЬНЫЕ СЕЛЕКТОРЫ:
 {web_selectors}
@@ -48,13 +47,13 @@ DSL КОД:
 Ты эксперт по автоматизации macOS. Создай DSL макрос для системных приложений.
 
 ДОСТУПНЫЕ SYSTEM КОМАНДЫ:
-- open_app "app_name" - открытие приложения
-- spotlight_search "query" - поиск через Spotlight
-- system_key "key_combination" - системные горячие клавиши
-- click "element_id" - клик по элементу приложения
-- type "text" - ввод текста
-- wait "time" - ожидание в секундах
-- system_command "command" - выполнение системной команды
+- @system open_app "app_name" - открытие приложения
+- key cmd+space - системные горячие клавиши (Spotlight)
+- type "query" - ввод текста для поиска
+- press enter - нажатие клавиши
+- click ElementName - клик по элементу приложения (шаблон)
+- wait 3s - ожидание в секундах
+- hotkey cmd+c - комбинация клавиш
 
 ДОСТУПНЫЕ ПРИЛОЖЕНИЯ:
 {system_apps}
@@ -111,24 +110,25 @@ DSL КОД:
 
 ДОСТУПНЫЕ КОМАНДЫ:
 
-ВЕБ-АВТОМАТИЗАЦИЯ:
-- navigate "url" - переход на страницу
-- click_element "selector" - клик по веб-элементу
-- fill_field "selector" "text" - заполнение поля
-- wait_for_element "selector" - ожидание элемента
+ВЕБ-АВТОМАТИЗАЦИЯ (через Selenium):
+- selenium_init url=https://site.com - инициализация браузера и переход на URL
+- selenium_find selector="css_selector" save_to=var_name - поиск элемента
+- selenium_click selector="css_selector" - клик по веб-элементу  
+- selenium_type selector="css_selector" text="текст" - заполнение поля
+- selenium_close - закрытие браузера
 
 СИСТЕМНАЯ АВТОМАТИЗАЦИЯ:
-- open_app "app_name" - открытие приложения
-- spotlight_search "query" - поиск через Spotlight
-- system_key "key_combination" - системные горячие клавиши
-- system_command "command" - выполнение команды
+- @system open_app "app_name" - открытие приложения
+- open AppName - запуск приложения через шаблон
+- key cmd+space - системные горячие клавиши
+- type "текст для поиска" - ввод текста
 
 БАЗОВЫЕ КОМАНДЫ:
-- wait "time" - ожидание
+- wait 3s - ожидание (3 секунды)
 - type "text" - ввод текста
-- click "element" - клик по элементу
-- key "key_combination" - нажатие клавиш
-- press "key" - нажатие одной клавиши
+- click ElementName - клик по элементу (шаблон)
+- press enter - нажатие клавиши
+- hotkey cmd+c - комбинация клавиш
 
 ДОСТУПНЫЕ РЕСУРСЫ:
 {all_resources}
@@ -151,15 +151,15 @@ DSL КОД:
 Ты эксперт по автоматизации калькулятора macOS. Создай DSL макрос для математических вычислений.
 
 ДОСТУПНЫЕ КОМАНДЫ КАЛЬКУЛЯТОРА:
-- open_app "Calculator" - открытие калькулятора
-- click "button_0" до "button_9" - цифры
-- click "button_plus" - сложение (+)
-- click "button_minus" - вычитание (−)
-- click "button_multiply" - умножение (×)
-- click "button_divide" - деление (÷)
-- click "button_equals" - равно (=)
-- click "button_clear" - очистка (C)
-- click "button_decimal" - десятичная точка (.)
+- @system open_app "Calculator" - открытие калькулятора
+- click button_0 до button_9 - цифры (без кавычек)
+- click button_plus - сложение (+)
+- click button_minus - вычитание (−)
+- click button_multiply - умножение (×)
+- click button_divide - деление (÷)
+- click button_equals - равно (=)
+- click button_clear - очистка (C)
+- click button_decimal - десятичная точка (.)
 
 ЭЛЕМЕНТЫ КАЛЬКУЛЯТОРА:
 {calculator_elements}

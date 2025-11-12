@@ -25,6 +25,9 @@ try:
 except ImportError:
     STATE_MANAGER_AVAILABLE = False
     print("⚠️ StateManager недоступен")
+    # Создаем заглушку для MacroState для аннотаций типов
+    class MacroState:
+        pass
 
 # Тяжелые импорты (ленивая загрузка)
 # numpy, PIL, cv2 загружаются только при использовании
@@ -815,6 +818,10 @@ class MacroRunner:
         elif action == 'ai_generate':
             return self._ai_generate(step)
         
+        # SYSTEM COMMANDS
+        elif action == 'system_command':
+            return self._system_command(step)
+        
         else:
             print(f"❌ Неизвестное действие: {action}")
             return False
@@ -1548,6 +1555,48 @@ class MacroRunner:
             
         except Exception as e:
             print(f"❌ Ошибка AI: {e}")
+            return False
+    
+    def _system_command(self, step: dict) -> bool:
+        """Выполнение системных команд"""
+        try:
+            command = step.get('command', '')
+            args = step.get('args', '')
+            
+            print(f"🔧 Системная команда: {command} {args}")
+            
+            if command == 'open_app':
+                # Открытие приложения
+                app_name = args.strip('"')
+                import subprocess
+                result = subprocess.run(['open', '-a', app_name], 
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ Приложение {app_name} запущено")
+                    return True
+                else:
+                    print(f"❌ Ошибка запуска {app_name}: {result.stderr}")
+                    return False
+            
+            elif command == 'close_app':
+                # Закрытие приложения
+                app_name = args.strip('"')
+                import subprocess
+                result = subprocess.run(['osascript', '-e', f'quit app "{app_name}"'], 
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ Приложение {app_name} закрыто")
+                    return True
+                else:
+                    print(f"❌ Ошибка закрытия {app_name}: {result.stderr}")
+                    return False
+            
+            else:
+                print(f"❌ Неизвестная системная команда: {command}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Ошибка выполнения системной команды: {e}")
             return False
     
     def run_sequence(self, sequence_name: str, delay: int = 3):

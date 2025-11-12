@@ -298,6 +298,10 @@ class AtlasDSLParser:
         """Парсит одну строку DSL"""
         line = line.strip()
         
+        # Удаляем комментарии в конце строки
+        if '#' in line and not line.startswith('#'):
+            line = line.split('#')[0].strip()
+        
         # Пустая строка или комментарий
         if not line or line.startswith('#'):
             return None
@@ -539,6 +543,54 @@ class AtlasDSLParser:
             return {
                 'action': 'selenium_close',
                 'description': 'Selenium close'
+            }
+        
+        # SELENIUM_CLICK - клик по элементу
+        if line.startswith('selenium_click'):
+            # Парсим: selenium_click selector="#element_id"
+            selector = None
+            if 'selector=' in line:
+                selector_part = line.split('selector=')[1].strip()
+                # Убираем кавычки
+                if selector_part.startswith('"') and selector_part.endswith('"'):
+                    selector = selector_part[1:-1]
+                else:
+                    selector = selector_part
+            return {
+                'action': 'selenium_click',
+                'selector': selector,
+                'description': f'Selenium click: {selector}'
+            }
+        
+        # SELENIUM_TYPE - ввод текста
+        if line.startswith('selenium_type'):
+            # Парсим: selenium_type selector="#input" text="hello"
+            selector = None
+            text = None
+            
+            if 'selector=' in line:
+                parts = line.split('selector=')[1].strip()
+                if 'text=' in parts:
+                    selector_part, text_part = parts.split('text=', 1)
+                    # Убираем кавычки из селектора
+                    selector_part = selector_part.strip()
+                    if selector_part.startswith('"') and selector_part.endswith('"'):
+                        selector = selector_part[1:-1]
+                    else:
+                        selector = selector_part
+                    
+                    # Убираем кавычки из текста
+                    text_part = text_part.strip()
+                    if text_part.startswith('"') and text_part.endswith('"'):
+                        text = text_part[1:-1]
+                    else:
+                        text = text_part
+            
+            return {
+                'action': 'selenium_type',
+                'selector': selector,
+                'text': text,
+                'description': f'Selenium type: {text} in {selector}'
             }
         
         # Неизвестная команда
