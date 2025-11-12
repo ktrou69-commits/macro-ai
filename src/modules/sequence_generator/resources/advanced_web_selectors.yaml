@@ -1,0 +1,388 @@
+# Расширенные web селекторы для популярных сайтов
+# Используется в sequence_generator для создания веб-автоматизации
+
+advanced_web_selectors:
+  # YouTube
+  youtube:
+    domain: "youtube.com"
+    description: "Видеохостинг YouTube"
+    selectors:
+      # Поиск
+      search_box: "//input[@id='search']"
+      search_button: "//button[@id='search-icon-legacy']"
+      search_suggestions: "//ul[@class='sbsb_b']//li"
+      
+      # Видеоплеер
+      video_player: "//div[@id='movie_player']"
+      play_pause_button: "//button[@class='ytp-play-button ytp-button']"
+      volume_button: "//button[@class='ytp-mute-button ytp-button']"
+      fullscreen_button: "//button[@class='ytp-fullscreen-button ytp-button']"
+      progress_bar: "//div[@class='ytp-progress-bar']"
+      
+      # Взаимодействие с видео
+      like_button: "//button[@aria-label='Like this video' or contains(@aria-label, 'like')]"
+      dislike_button: "//button[@aria-label='Dislike this video' or contains(@aria-label, 'dislike')]"
+      subscribe_button: "//button[contains(@aria-label, 'Subscribe') or contains(text(), 'Subscribe')]"
+      share_button: "//button[@aria-label='Share']"
+      save_button: "//button[@aria-label='Save to playlist']"
+      
+      # Комментарии
+      comments_section: "//div[@id='comments']"
+      comment_box: "//div[@id='placeholder-area']"
+      comment_submit: "//button[@id='submit-button']"
+      
+      # Навигация
+      home_tab: "//a[@id='logo']"
+      trending_tab: "//a[contains(@href, '/feed/trending')]"
+      subscriptions_tab: "//a[contains(@href, '/feed/subscriptions')]"
+      library_tab: "//a[contains(@href, '/feed/library')]"
+      
+      # Результаты поиска
+      video_results: "//div[@id='contents']//a[@id='video-title']"
+      first_video: "//div[@id='contents']//a[@id='video-title'][1]"
+      channel_results: "//div[@id='contents']//a[contains(@href, '/channel/')]"
+      
+      # Плейлисты
+      playlist_items: "//div[@id='playlist-items']//a"
+      add_to_playlist: "//button[@aria-label='Add to playlist']"
+      
+    keywords:
+      - "youtube"
+      - "ютуб"
+      - "видео"
+      - "плеер"
+      - "подписка"
+
+  # Google Search
+  google:
+    domain: "google.com"
+    description: "Поисковая система Google"
+    selectors:
+      # Поиск
+      search_box: "//input[@name='q' or @title='Search']"
+      search_button: "//input[@name='btnK' or @value='Google Search']"
+      lucky_button: "//input[@name='btnI' or @value=\"I'm Feeling Lucky\"]"
+      search_suggestions: "//ul[@role='listbox']//li"
+      
+      # Результаты поиска
+      search_results: "//div[@id='search']//div[@class='g']"
+      first_result: "//div[@id='search']//div[@class='g'][1]//a"
+      result_titles: "//div[@id='search']//h3"
+      result_links: "//div[@id='search']//div[@class='g']//a"
+      result_snippets: "//div[@id='search']//span[contains(@class, 'st')]"
+      
+      # Фильтры и вкладки
+      all_tab: "//a[contains(@href, 'tbm=') and text()='All']"
+      images_tab: "//a[contains(@href, 'tbm=isch')]"
+      videos_tab: "//a[contains(@href, 'tbm=vid')]"
+      news_tab: "//a[contains(@href, 'tbm=nws')]"
+      shopping_tab: "//a[contains(@href, 'tbm=shop')]"
+      maps_tab: "//a[contains(@href, 'tbm=map')]"
+      
+      # Инструменты поиска
+      tools_button: "//div[@id='hdtb-tls']"
+      time_filter: "//div[@id='hdtb-mn-hd']"
+      search_tools: "//div[@id='hdtb-msb']//a"
+      
+      # Пагинация
+      next_page: "//a[@id='pnnext']"
+      previous_page: "//a[@id='pnprev']"
+      page_numbers: "//table[@id='nav']//a"
+      
+    keywords:
+      - "google"
+      - "гугл"
+      - "поиск"
+      - "search"
+
+  # GitHub
+  github:
+    domain: "github.com"
+    description: "Платформа для разработки GitHub"
+    selectors:
+      # Навигация
+      search_box: "//input[@name='q' or @placeholder='Search GitHub']"
+      search_button: "//button[contains(@class, 'header-search-button')]"
+      
+      # Репозитории
+      repo_name: "//h1[@class='public']//a"
+      star_button: "//button[contains(@class, 'starred') or contains(text(), 'Star')]"
+      fork_button: "//button[contains(text(), 'Fork')]"
+      watch_button: "//button[contains(text(), 'Watch')]"
+      clone_button: "//button[contains(text(), 'Clone')]"
+      
+      # Файлы и код
+      file_list: "//div[@role='grid']//a"
+      readme_file: "//article[@class='markdown-body']"
+      code_button: "//button[contains(text(), 'Code')]"
+      
+      # Issues и PR
+      issues_tab: "//a[contains(@href, '/issues')]"
+      pull_requests_tab: "//a[contains(@href, '/pulls')]"
+      new_issue_button: "//a[contains(text(), 'New issue')]"
+      
+      # Профиль
+      profile_avatar: "//img[@class='avatar']"
+      profile_dropdown: "//summary[@class='Header-link']"
+      
+    keywords:
+      - "github"
+      - "гитхаб"
+      - "репозиторий"
+      - "код"
+
+  # Twitter/X
+  twitter:
+    domain: "twitter.com"
+    description: "Социальная сеть Twitter/X"
+    selectors:
+      # Навигация
+      home_timeline: "//a[@href='/home']"
+      explore_tab: "//a[@href='/explore']"
+      notifications_tab: "//a[@href='/notifications']"
+      messages_tab: "//a[@href='/messages']"
+      
+      # Твиты
+      tweet_button: "//a[@data-testid='SideNav_NewTweet_Button']"
+      tweet_compose: "//div[@data-testid='tweetTextarea_0']"
+      tweet_send: "//div[@data-testid='tweetButton']"
+      
+      # Взаимодействие
+      like_button: "//div[@data-testid='like']"
+      retweet_button: "//div[@data-testid='retweet']"
+      reply_button: "//div[@data-testid='reply']"
+      share_button: "//div[@data-testid='share']"
+      
+      # Поиск
+      search_box: "//input[@data-testid='SearchBox_Search_Input']"
+      search_results: "//div[@data-testid='primaryColumn']"
+      
+      # Профиль
+      profile_menu: "//div[@data-testid='SideNav_AccountSwitcher_Button']"
+      follow_button: "//div[@data-testid='follow']"
+      
+    keywords:
+      - "twitter"
+      - "твиттер"
+      - "x.com"
+      - "твит"
+      - "социальная сеть"
+
+  # LinkedIn
+  linkedin:
+    domain: "linkedin.com"
+    description: "Профессиональная социальная сеть LinkedIn"
+    selectors:
+      # Навигация
+      home_feed: "//a[contains(@href, '/feed/')]"
+      my_network: "//a[contains(@href, '/mynetwork/')]"
+      jobs_tab: "//a[contains(@href, '/jobs/')]"
+      messaging: "//a[contains(@href, '/messaging/')]"
+      
+      # Поиск
+      search_box: "//input[@placeholder='Search']"
+      search_button: "//button[contains(@class, 'search-global-typeahead__button')]"
+      
+      # Посты
+      post_button: "//button[contains(text(), 'Start a post')]"
+      post_text: "//div[@data-placeholder='What do you want to talk about?']"
+      post_submit: "//button[contains(text(), 'Post')]"
+      
+      # Взаимодействие
+      like_button: "//button[contains(@aria-label, 'Like')]"
+      comment_button: "//button[contains(@aria-label, 'Comment')]"
+      share_button: "//button[contains(@aria-label, 'Share')]"
+      
+      # Профиль
+      profile_dropdown: "//button[contains(@class, 'global-nav__primary-link-me-menu-trigger')]"
+      connect_button: "//button[contains(text(), 'Connect')]"
+      
+    keywords:
+      - "linkedin"
+      - "линкедин"
+      - "профессиональная сеть"
+      - "работа"
+
+  # Facebook
+  facebook:
+    domain: "facebook.com"
+    description: "Социальная сеть Facebook"
+    selectors:
+      # Навигация
+      home_feed: "//a[@href='/']"
+      friends_tab: "//a[contains(@href, '/friends/')]"
+      groups_tab: "//a[contains(@href, '/groups/')]"
+      marketplace: "//a[contains(@href, '/marketplace/')]"
+      
+      # Поиск
+      search_box: "//input[@placeholder='Search Facebook']"
+      
+      # Посты
+      post_composer: "//div[contains(@data-testid, 'status-attachment-mentions-input')]"
+      post_button: "//div[@data-testid='react-composer-post-button']"
+      
+      # Взаимодействие
+      like_button: "//div[@data-testid='fb-ufi-likelink']"
+      comment_button: "//div[@data-testid='fb-ufi-commentlink']"
+      share_button: "//div[@data-testid='fb-ufi-sharelink']"
+      
+    keywords:
+      - "facebook"
+      - "фейсбук"
+      - "социальная сеть"
+
+  # Amazon
+  amazon:
+    domain: "amazon.com"
+    description: "Интернет-магазин Amazon"
+    selectors:
+      # Поиск
+      search_box: "//input[@id='twotabsearchtextbox']"
+      search_button: "//input[@id='nav-search-submit-button']"
+      search_suggestions: "//div[@id='suggestions']//div"
+      
+      # Товары
+      product_results: "//div[@data-component-type='s-search-result']"
+      first_product: "//div[@data-component-type='s-search-result'][1]//a"
+      product_title: "//span[@id='productTitle']"
+      product_price: "//span[@class='a-price-whole']"
+      add_to_cart: "//input[@id='add-to-cart-button']"
+      buy_now: "//input[@id='buy-now-button']"
+      
+      # Навигация
+      cart_button: "//a[@id='nav-cart']"
+      account_menu: "//a[@id='nav-link-accountList']"
+      orders_link: "//a[contains(@href, '/order-history')]"
+      
+      # Фильтры
+      price_filter: "//div[@id='priceRefinements']"
+      brand_filter: "//div[@id='brandRefinements']"
+      rating_filter: "//div[@id='reviewsRefinements']"
+      
+    keywords:
+      - "amazon"
+      - "амазон"
+      - "магазин"
+      - "покупки"
+
+  # Netflix
+  netflix:
+    domain: "netflix.com"
+    description: "Стриминговый сервис Netflix"
+    selectors:
+      # Навигация
+      home_tab: "//a[contains(@href, '/browse')]"
+      my_list: "//a[contains(@href, '/browse/my-list')]"
+      search_icon: "//button[@data-uia='search-box-launcher']"
+      search_input: "//input[@data-uia='search-box-input']"
+      
+      # Контент
+      play_button: "//button[@data-uia='play-button']"
+      add_to_list: "//button[@data-uia='add-to-my-list']"
+      thumbs_up: "//button[@data-uia='thumb-rating-up']"
+      thumbs_down: "//button[@data-uia='thumb-rating-down']"
+      
+      # Профиль
+      profile_menu: "//div[@class='profile-menu-trigger']"
+      account_menu: "//a[contains(@href, '/account')]"
+      
+    keywords:
+      - "netflix"
+      - "нетфликс"
+      - "фильмы"
+      - "сериалы"
+      - "стриминг"
+
+  # Spotify
+  spotify:
+    domain: "spotify.com"
+    description: "Музыкальный стриминг Spotify"
+    selectors:
+      # Навигация
+      home_tab: "//a[contains(@href, '/')]"
+      search_tab: "//a[contains(@href, '/search')]"
+      library_tab: "//a[contains(@href, '/collection')]"
+      
+      # Поиск
+      search_input: "//input[@data-testid='search-input']"
+      
+      # Плеер
+      play_button: "//button[@data-testid='control-button-playpause']"
+      next_button: "//button[@data-testid='control-button-skip-forward']"
+      previous_button: "//button[@data-testid='control-button-skip-back']"
+      volume_button: "//button[@data-testid='volume-bar-toggle-mute-button']"
+      
+      # Плейлисты
+      create_playlist: "//button[@data-testid='create-playlist-button']"
+      add_to_playlist: "//button[@data-testid='add-to-playlist-button']"
+      
+    keywords:
+      - "spotify"
+      - "спотифай"
+      - "музыка"
+      - "плейлист"
+
+# Общие паттерны для веб-автоматизации
+web_patterns:
+  # Формы
+  forms:
+    login_form: "//form[contains(@class, 'login') or contains(@id, 'login')]"
+    signup_form: "//form[contains(@class, 'signup') or contains(@id, 'signup')]"
+    contact_form: "//form[contains(@class, 'contact') or contains(@id, 'contact')]"
+    search_form: "//form[contains(@class, 'search') or contains(@id, 'search')]"
+    
+  # Поля ввода
+  inputs:
+    email_field: "//input[@type='email' or @name='email' or contains(@placeholder, 'email')]"
+    password_field: "//input[@type='password' or @name='password']"
+    username_field: "//input[@name='username' or @name='user' or contains(@placeholder, 'username')]"
+    search_field: "//input[@type='search' or contains(@placeholder, 'search')]"
+    
+  # Кнопки
+  buttons:
+    submit_button: "//button[@type='submit' or contains(text(), 'Submit')]"
+    login_button: "//button[contains(text(), 'Login') or contains(text(), 'Sign in')]"
+    signup_button: "//button[contains(text(), 'Sign up') or contains(text(), 'Register')]"
+    search_button: "//button[contains(text(), 'Search') or @type='submit']"
+    
+  # Навигация
+  navigation:
+    menu_button: "//button[contains(@class, 'menu') or contains(@aria-label, 'menu')]"
+    home_link: "//a[contains(@href, '/') and (contains(text(), 'Home') or contains(@class, 'home'))]"
+    back_button: "//button[contains(text(), 'Back') or contains(@aria-label, 'back')]"
+    
+  # Модальные окна
+  modals:
+    modal_dialog: "//div[@role='dialog' or contains(@class, 'modal')]"
+    close_modal: "//button[contains(@aria-label, 'close') or contains(@class, 'close')]"
+    modal_overlay: "//div[contains(@class, 'overlay') or contains(@class, 'backdrop')]"
+
+# Команды для веб-автоматизации
+web_commands:
+  navigate_to_site:
+    description: "Переход на веб-сайт"
+    dsl_template: |
+      # Переход на {site_name}
+      navigate "{url}"
+      wait 3s
+  
+  search_on_site:
+    description: "Поиск на сайте"
+    dsl_template: |
+      # Поиск на {site_name}: {query}
+      click_element "{search_selector}"
+      wait 1s
+      type "{query}"
+      press enter
+      wait 3s
+  
+  login_to_site:
+    description: "Вход на сайт"
+    dsl_template: |
+      # Вход на {site_name}
+      click_element "{login_button}"
+      wait 2s
+      fill_field "{email_field}" "{email}"
+      fill_field "{password_field}" "{password}"
+      click_element "{submit_button}"
+      wait 3s

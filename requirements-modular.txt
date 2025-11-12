@@ -9,5 +9,4 @@ google-generativeai>=0.3.0
 pyyaml>=6.0
 python-dotenv>=1.0.0
 
-# Для тестирования
-unittest-mock>=1.0.1
+# Для тестирования (unittest.mock встроен в Python 3.3+)

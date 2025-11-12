@@ -5,7 +5,7 @@ author: "Macro AI Team"
 
 # AI Configuration
 ai_config:
-  model: "gemini-1.5-pro"
+  model: "gemini-2.5-flash"
   max_tokens: 4096
   temperature: 0.7
   

@@ -71,10 +71,10 @@ class DSLExecutor(Executor):
             sys.path.insert(0, str(project_root))
             
             from src.core.atlas_dsl_parser import AtlasDSLParser
-            from src.core.macro_sequence import MacroSequence
+            from src.core.macro_sequence import MacroRunner
             
             self.dsl_parser = AtlasDSLParser()
-            self.macro_sequence_class = MacroSequence
+            self.macro_sequence_class = MacroRunner
             
         except ImportError as e:
             print(f"⚠️ Не удалось импортировать DSL компоненты: {e}")

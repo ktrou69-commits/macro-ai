@@ -6,6 +6,7 @@
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -17,6 +18,11 @@ sys.path.insert(0, str(project_root))
 from src.modules.base.ai_module import AIModule
 from src.modules.base.module_config import ModuleConfig, ResourcesConfig, ExecutorConfig
 from src.modules.base.module_result import ModuleResult
+
+# Новые компоненты для расширенной автоматизации
+from .handlers.system_app_handler import SystemAppHandler
+from .integrations.spotlight_integration import SpotlightIntegration
+from .managers.web_selector_manager import WebSelectorManager
 
 
 class SequenceGeneratorModule(AIModule):
@@ -50,6 +56,9 @@ class SequenceGeneratorModule(AIModule):
         
         # Интеграция с существующим AIMacroGenerator
         self._initialize_legacy_generator()
+        
+        # Инициализация новых компонентов
+        self._initialize_enhanced_components()
     
     def _initialize_legacy_generator(self):
         """Инициализация существующего AIMacroGenerator"""
@@ -60,6 +69,30 @@ class SequenceGeneratorModule(AIModule):
         except ImportError as e:
             self.logger.warning(f"Не удалось импортировать AIMacroGenerator: {e}")
             self.legacy_generator = None
+    
+    def _initialize_enhanced_components(self):
+        """Инициализация новых компонентов для расширенной автоматизации"""
+        try:
+            # Инициализация обработчика системных приложений
+            self.system_app_handler = SystemAppHandler()
+            self.logger.info(f"✅ SystemAppHandler: {len(self.system_app_handler.get_all_system_apps())} приложений")
+            
+            # Инициализация Spotlight интеграции
+            self.spotlight_integration = SpotlightIntegration()
+            spotlight_stats = self.spotlight_integration.get_spotlight_statistics()
+            self.logger.info(f"✅ SpotlightIntegration: {'доступен' if spotlight_stats.get('available') else 'недоступен'}")
+            
+            # Инициализация менеджера веб-селекторов
+            self.web_selector_manager = WebSelectorManager()
+            web_stats = self.web_selector_manager.get_site_statistics()
+            self.logger.info(f"✅ WebSelectorManager: {web_stats.get('total_sites')} сайтов, {web_stats.get('total_selectors')} селекторов")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Ошибка инициализации расширенных компонентов: {e}")
+            # Fallback к None для graceful degradation
+            self.system_app_handler = None
+            self.spotlight_integration = None
+            self.web_selector_manager = None
     
     def get_context_resources(self) -> Dict[str, Any]:
         """Загружает ресурсы для контекста (интеграция с существующей системой)"""
@@ -83,16 +116,124 @@ class SequenceGeneratorModule(AIModule):
                 # Загружаем системные команды
                 if self.config.resources_config.system_commands:
                     resources["system_commands"] = self._load_system_commands_via_legacy()
-            
             else:
                 # Fallback к базовой реализации
                 resources = super().get_context_resources()
+            
+            # Добавляем новые расширенные ресурсы
+            resources.update(self._load_enhanced_resources())
             
         except Exception as e:
             self.logger.error(f"Ошибка загрузки ресурсов: {e}")
             resources = super().get_context_resources()
         
         return resources
+    
+    def execute(self, user_input: str, context: Optional[Dict[str, Any]] = None) -> ModuleResult:
+        """
+        Переопределенный метод выполнения с расширенными возможностями
+        """
+        start_time = time.time()
+        
+        if context is None:
+            context = {}
+        
+        self.logger.info(f"Начало выполнения: {user_input[:50]}...")
+        
+        try:
+            # 1. Анализ намерений пользователя
+            intent = self._analyze_user_intent(user_input)
+            self.logger.info(f"Анализ намерений: {intent['type']} (confidence: {intent['confidence']})")
+            
+            # 2. Попытка генерации через расширенные возможности
+            enhanced_dsl = None
+            if intent["confidence"] > 0.6:
+                enhanced_dsl = self._generate_enhanced_dsl(user_input, intent)
+                if enhanced_dsl:
+                    self.logger.info(f"Использована расширенная генерация для {intent['type']}")
+            
+            # 3. Если расширенная генерация не сработала, используем AI
+            if not enhanced_dsl:
+                # Формирование промпта с контекстом
+                full_prompt = self.build_prompt(user_input, context)
+                
+                # AI генерация результата
+                ai_result = self.ai_agent.generate(full_prompt, context)
+                self.logger.info("AI генерация завершена")
+                
+                # Парсинг AI результата
+                parsed_result = self.parse_ai_result(ai_result)
+                self.logger.info("Парсинг AI результата завершен")
+                
+                dsl_code = parsed_result["dsl_code"]
+                name = parsed_result["name"]
+                description = parsed_result["description"]
+            else:
+                # Используем результат расширенной генерации
+                dsl_code = enhanced_dsl
+                name = f"Enhanced {intent['type'].title()} Macro"
+                description = f"Автоматически сгенерированный макрос для {intent['type']}"
+                parsed_result = {
+                    "name": name,
+                    "dsl_code": dsl_code,
+                    "description": description,
+                    "enhanced": True,
+                    "intent": intent
+                }
+            
+            # 4. Сохранение макроса
+            saved_file = self._save_generated_macro(name, dsl_code, description)
+            
+            # 5. Выполнение через executor (опционально)
+            execution_result = None
+            if self.config.executor_config.type != "none":
+                execution_result = self.executor.execute(dsl_code)
+                self.logger.info("Выполнение через executor завершено")
+            
+            # 6. Формирование результата
+            execution_time = time.time() - start_time
+            
+            result_data = {
+                "generated_macro": {
+                    "name": name,
+                    "description": description,
+                    "dsl_code": dsl_code
+                },
+                "saved_file": saved_file,
+                "intent_analysis": intent,
+                "enhanced_generation": bool(enhanced_dsl)
+            }
+            
+            if execution_result:
+                result_data["execution_result"] = execution_result.to_dict()
+            
+            result = ModuleResult(
+                success=True,
+                data=result_data,
+                execution_time=execution_time,
+                metadata={
+                    "parsed_result": parsed_result,
+                    "intent": intent,
+                    "enhanced": bool(enhanced_dsl)
+                }
+            )
+            
+            result.add_log(f"Макрос '{name}' успешно создан")
+            if saved_file:
+                result.add_log(f"Сохранен в: {Path(saved_file).name}")
+            
+            return result
+            
+        except Exception as e:
+            execution_time = time.time() - start_time
+            error_msg = f"Ошибка в модуле {self.name}: {str(e)}"
+            self.logger.error(error_msg)
+            
+            return ModuleResult(
+                success=False,
+                error=error_msg,
+                execution_time=execution_time
+            )
     
     def _load_templates_via_legacy(self) -> Dict[str, Any]:
         """Загрузка шаблонов через существующую систему"""
@@ -412,3 +553,196 @@ class SequenceGeneratorModule(AIModule):
         except Exception as e:
             self.logger.error(f"Ошибка сохранения макроса: {e}")
             return ""
+    
+    def _load_enhanced_resources(self) -> Dict[str, Any]:
+        """Загрузка расширенных ресурсов (системные приложения, веб-селекторы, Spotlight)"""
+        enhanced_resources = {}
+        
+        try:
+            # Системные приложения
+            if self.system_app_handler:
+                system_apps = self.system_app_handler.get_all_system_apps()
+                enhanced_resources["system_apps"] = {
+                    "count": len(system_apps),
+                    "available": system_apps[:15],  # Ограничиваем для промпта
+                    "examples": ["Calculator", "Finder", "System_Preferences", "TextEdit", "Terminal"]
+                }
+            
+            # Веб-селекторы
+            if self.web_selector_manager:
+                web_stats = self.web_selector_manager.get_site_statistics()
+                supported_sites = self.web_selector_manager.get_supported_sites()
+                enhanced_resources["web_selectors"] = {
+                    "total_sites": web_stats.get("total_sites", 0),
+                    "total_selectors": web_stats.get("total_selectors", 0),
+                    "popular_sites": [site["name"] for site in supported_sites[:10]],
+                    "examples": ["youtube", "google", "github", "twitter", "linkedin"]
+                }
+            
+            # Spotlight интеграция
+            if self.spotlight_integration:
+                spotlight_stats = self.spotlight_integration.get_spotlight_statistics()
+                enhanced_resources["spotlight"] = {
+                    "available": spotlight_stats.get("available", False),
+                    "common_searches": list(self.spotlight_integration.common_searches.keys())[:10],
+                    "examples": ["калькулятор", "finder", "настройки", "терминал"]
+                }
+            
+            return enhanced_resources
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка загрузки расширенных ресурсов: {e}")
+            return {}
+    
+    def _analyze_user_intent(self, user_input: str) -> Dict[str, Any]:
+        """Анализ намерений пользователя для выбора типа автоматизации"""
+        intent = {
+            "type": "general",  # general, system_app, web, spotlight
+            "target_app": None,
+            "target_site": None,
+            "action": None,
+            "confidence": 0.5
+        }
+        
+        user_lower = user_input.lower()
+        
+        # Проверка на системные приложения
+        if self.system_app_handler:
+            for app_name in self.system_app_handler.get_all_system_apps():
+                app_keywords = self.system_app_handler.get_app_keywords(app_name)
+                if any(keyword.lower() in user_lower for keyword in app_keywords):
+                    intent["type"] = "system_app"
+                    intent["target_app"] = app_name
+                    intent["confidence"] = 0.8
+                    break
+        
+        # Проверка на веб-сайты
+        if self.web_selector_manager and intent["type"] == "general":
+            matching_sites = self.web_selector_manager.identify_site_from_keywords(user_input)
+            if matching_sites:
+                intent["type"] = "web"
+                intent["target_site"] = matching_sites[0]
+                intent["confidence"] = 0.7
+        
+        # Проверка на Spotlight поиск
+        spotlight_keywords = ["найди", "поиск", "spotlight", "спотлайт", "найти"]
+        if any(keyword in user_lower for keyword in spotlight_keywords):
+            intent["type"] = "spotlight"
+            intent["confidence"] = 0.6
+        
+        # Определение действия
+        action_keywords = {
+            "open": ["открой", "запусти", "открыть", "запустить", "open", "launch"],
+            "search": ["найди", "поиск", "найти", "search", "find"],
+            "click": ["кликни", "нажми", "click", "press"],
+            "type": ["введи", "напиши", "type", "write"]
+        }
+        
+        for action, keywords in action_keywords.items():
+            if any(keyword in user_lower for keyword in keywords):
+                intent["action"] = action
+                break
+        
+        return intent
+    
+    def _generate_enhanced_dsl(self, user_input: str, intent: Dict[str, Any]) -> str:
+        """Генерация DSL с использованием расширенных возможностей"""
+        try:
+            if intent["type"] == "system_app" and intent["target_app"]:
+                return self._generate_system_app_dsl(user_input, intent["target_app"])
+            
+            elif intent["type"] == "web" and intent["target_site"]:
+                return self._generate_web_automation_dsl(user_input, intent["target_site"])
+            
+            elif intent["type"] == "spotlight":
+                return self._generate_spotlight_dsl(user_input)
+            
+            else:
+                # Fallback к обычной генерации через AI
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Ошибка генерации расширенного DSL: {e}")
+            return None
+    
+    def _generate_system_app_dsl(self, user_input: str, app_name: str) -> str:
+        """Генерация DSL для системных приложений"""
+        if not self.system_app_handler:
+            return None
+        
+        # Специальные случаи для популярных приложений
+        if "калькулятор" in user_input.lower() or "calculator" in user_input.lower():
+            # Поиск математического выражения
+            import re
+            math_pattern = r'(\d+[\+\-\*\/\=\d\s\.]+)'
+            match = re.search(math_pattern, user_input)
+            if match:
+                expression = match.group(1).strip()
+                return self.system_app_handler.generate_calculator_macro(expression)
+        
+        if "finder" in user_input.lower() and ("найди" in user_input.lower() or "поиск" in user_input.lower()):
+            # Извлечение поискового запроса
+            search_terms = user_input.lower().replace("finder", "").replace("найди", "").replace("поиск", "").strip()
+            if search_terms:
+                return self.system_app_handler.generate_finder_search_macro(search_terms)
+        
+        # Обычный запуск приложения
+        return self.system_app_handler.generate_app_launch_dsl(app_name)
+    
+    def _generate_web_automation_dsl(self, user_input: str, site_name: str) -> str:
+        """Генерация DSL для веб-автоматизации"""
+        if not self.web_selector_manager:
+            return None
+        
+        user_lower = user_input.lower()
+        
+        # YouTube специальные случаи
+        if site_name == "youtube":
+            if "найди" in user_lower or "поиск" in user_lower:
+                # Извлечение поискового запроса
+                query = user_lower.replace("youtube", "").replace("найди", "").replace("поиск", "").strip()
+                if query:
+                    return self.web_selector_manager.generate_youtube_automation_dsl("search_and_play", query)
+            elif "лайк" in user_lower:
+                return self.web_selector_manager.generate_youtube_automation_dsl("like_video")
+            elif "подпиш" in user_lower:
+                return self.web_selector_manager.generate_youtube_automation_dsl("subscribe")
+        
+        # Google поиск
+        elif site_name == "google":
+            if "найди" in user_lower or "поиск" in user_lower:
+                query = user_lower.replace("google", "").replace("гугл", "").replace("найди", "").replace("поиск", "").strip()
+                search_type = "web"
+                if "картинки" in user_lower or "изображения" in user_lower:
+                    search_type = "images"
+                elif "видео" in user_lower:
+                    search_type = "videos"
+                elif "новости" in user_lower:
+                    search_type = "news"
+                
+                if query:
+                    return self.web_selector_manager.generate_google_search_dsl(query, search_type)
+        
+        # Обычная навигация на сайт
+        return self.web_selector_manager.generate_web_navigation_dsl(site_name)
+    
+    def _generate_spotlight_dsl(self, user_input: str) -> str:
+        """Генерация DSL для Spotlight поиска"""
+        if not self.spotlight_integration:
+            return None
+        
+        # Извлечение поискового запроса
+        user_lower = user_input.lower()
+        query = user_lower
+        
+        # Убираем служебные слова
+        remove_words = ["найди", "поиск", "spotlight", "спотлайт", "найти", "через", "в"]
+        for word in remove_words:
+            query = query.replace(word, "")
+        
+        query = query.strip()
+        
+        if query:
+            return self.spotlight_integration.generate_spotlight_search_dsl(query, "open")
+        
+        return None

@@ -10,7 +10,7 @@ from pathlib import Path
 @dataclass
 class AIConfig:
     """Конфигурация AI агента"""
-    model: str = "gemini-1.5-pro"
+    model: str = "gemini-2.5-flash"
     max_tokens: int = 4096
     temperature: float = 0.7
     timeout: int = 30

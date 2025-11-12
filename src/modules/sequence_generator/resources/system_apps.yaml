@@ -1,0 +1,277 @@
+# Системные приложения macOS для автоматизации
+# Конфигурация для sequence_generator модуля
+
+system_apps:
+  # Калькулятор
+  Calculator:
+    bundle_id: "com.apple.calculator"
+    launch_command: "open -a Calculator"
+    app_name: "Calculator"
+    description: "Стандартный калькулятор macOS"
+    common_elements:
+      # Цифры
+      button_0: "//XCUIElementTypeButton[@name='0']"
+      button_1: "//XCUIElementTypeButton[@name='1']"
+      button_2: "//XCUIElementTypeButton[@name='2']"
+      button_3: "//XCUIElementTypeButton[@name='3']"
+      button_4: "//XCUIElementTypeButton[@name='4']"
+      button_5: "//XCUIElementTypeButton[@name='5']"
+      button_6: "//XCUIElementTypeButton[@name='6']"
+      button_7: "//XCUIElementTypeButton[@name='7']"
+      button_8: "//XCUIElementTypeButton[@name='8']"
+      button_9: "//XCUIElementTypeButton[@name='9']"
+      # Операции
+      button_plus: "//XCUIElementTypeButton[@name='+']"
+      button_minus: "//XCUIElementTypeButton[@name='−']"
+      button_multiply: "//XCUIElementTypeButton[@name='×']"
+      button_divide: "//XCUIElementTypeButton[@name='÷']"
+      button_equals: "//XCUIElementTypeButton[@name='=']"
+      button_clear: "//XCUIElementTypeButton[@name='C']"
+      button_decimal: "//XCUIElementTypeButton[@name='.']"
+    keywords:
+      - "калькулятор"
+      - "calculator" 
+      - "посчитай"
+      - "вычисли"
+      - "математика"
+
+  # Finder
+  Finder:
+    bundle_id: "com.apple.finder"
+    launch_command: "open -a Finder"
+    app_name: "Finder"
+    description: "Файловый менеджер macOS"
+    common_elements:
+      # Поиск
+      search_field: "//XCUIElementTypeSearchField"
+      search_button: "//XCUIElementTypeButton[@name='Search']"
+      # Сайдбар
+      sidebar_applications: "//XCUIElementTypeOutlineRow[@name='Applications']"
+      sidebar_desktop: "//XCUIElementTypeOutlineRow[@name='Desktop']"
+      sidebar_documents: "//XCUIElementTypeOutlineRow[@name='Documents']"
+      sidebar_downloads: "//XCUIElementTypeOutlineRow[@name='Downloads']"
+      sidebar_home: "//XCUIElementTypeOutlineRow[contains(@name, 'kostya')]"
+      # Кнопки
+      back_button: "//XCUIElementTypeButton[@name='Back']"
+      forward_button: "//XCUIElementTypeButton[@name='Forward']"
+      view_options: "//XCUIElementTypeButton[@name='View Options']"
+    keywords:
+      - "finder"
+      - "файлы"
+      - "папки"
+      - "поиск файлов"
+      - "файловый менеджер"
+
+  # Системные настройки
+  System_Preferences:
+    bundle_id: "com.apple.systempreferences"
+    launch_command: "open -a 'System Preferences'"
+    app_name: "System Preferences"
+    description: "Системные настройки macOS"
+    common_elements:
+      # Поиск
+      search_field: "//XCUIElementTypeSearchField"
+      # Основные категории
+      general_pref: "//XCUIElementTypeButton[@name='General']"
+      desktop_pref: "//XCUIElementTypeButton[@name='Desktop & Screen Saver']"
+      dock_pref: "//XCUIElementTypeButton[@name='Dock & Menu Bar']"
+      language_pref: "//XCUIElementTypeButton[@name='Language & Region']"
+      security_pref: "//XCUIElementTypeButton[@name='Security & Privacy']"
+      spotlight_pref: "//XCUIElementTypeButton[@name='Spotlight']"
+      notifications_pref: "//XCUIElementTypeButton[@name='Notifications & Focus']"
+      internet_pref: "//XCUIElementTypeButton[@name='Internet Accounts']"
+      network_pref: "//XCUIElementTypeButton[@name='Network']"
+      bluetooth_pref: "//XCUIElementTypeButton[@name='Bluetooth']"
+      sound_pref: "//XCUIElementTypeButton[@name='Sound']"
+      keyboard_pref: "//XCUIElementTypeButton[@name='Keyboard']"
+      trackpad_pref: "//XCUIElementTypeButton[@name='Trackpad']"
+      mouse_pref: "//XCUIElementTypeButton[@name='Mouse']"
+      displays_pref: "//XCUIElementTypeButton[@name='Displays']"
+    keywords:
+      - "настройки"
+      - "preferences"
+      - "system preferences"
+      - "системные настройки"
+      - "конфигурация"
+
+  # Текстовый редактор
+  TextEdit:
+    bundle_id: "com.apple.TextEdit"
+    launch_command: "open -a TextEdit"
+    app_name: "TextEdit"
+    description: "Простой текстовый редактор"
+    common_elements:
+      # Меню
+      file_menu: "//XCUIElementTypeMenuButton[@name='File']"
+      edit_menu: "//XCUIElementTypeMenuButton[@name='Edit']"
+      format_menu: "//XCUIElementTypeMenuButton[@name='Format']"
+      # Кнопки
+      new_document: "//XCUIElementTypeButton[@name='New Document']"
+      save_button: "//XCUIElementTypeButton[@name='Save']"
+      # Текстовая область
+      text_area: "//XCUIElementTypeTextView"
+    keywords:
+      - "textedit"
+      - "текстовый редактор"
+      - "блокнот"
+      - "редактор текста"
+
+  # Просмотр изображений
+  Preview:
+    bundle_id: "com.apple.Preview"
+    launch_command: "open -a Preview"
+    app_name: "Preview"
+    description: "Просмотр изображений и PDF"
+    common_elements:
+      # Кнопки навигации
+      previous_page: "//XCUIElementTypeButton[@name='Previous Page']"
+      next_page: "//XCUIElementTypeButton[@name='Next Page']"
+      # Масштаб
+      zoom_in: "//XCUIElementTypeButton[@name='Zoom In']"
+      zoom_out: "//XCUIElementTypeButton[@name='Zoom Out']"
+      actual_size: "//XCUIElementTypeButton[@name='Actual Size']"
+      # Инструменты
+      markup_toolbar: "//XCUIElementTypeButton[@name='Show Markup Toolbar']"
+    keywords:
+      - "preview"
+      - "просмотр"
+      - "изображения"
+      - "pdf"
+      - "картинки"
+
+  # Активность системы
+  Activity_Monitor:
+    bundle_id: "com.apple.ActivityMonitor"
+    launch_command: "open -a 'Activity Monitor'"
+    app_name: "Activity Monitor"
+    description: "Мониторинг активности системы"
+    common_elements:
+      # Вкладки
+      cpu_tab: "//XCUIElementTypeButton[@name='CPU']"
+      memory_tab: "//XCUIElementTypeButton[@name='Memory']"
+      energy_tab: "//XCUIElementTypeButton[@name='Energy']"
+      disk_tab: "//XCUIElementTypeButton[@name='Disk']"
+      network_tab: "//XCUIElementTypeButton[@name='Network']"
+      # Кнопки
+      quit_process: "//XCUIElementTypeButton[@name='Quit Process']"
+      force_quit: "//XCUIElementTypeButton[@name='Force Quit']"
+    keywords:
+      - "activity monitor"
+      - "мониторинг"
+      - "процессы"
+      - "активность"
+      - "диспетчер задач"
+
+  # Терминал
+  Terminal:
+    bundle_id: "com.apple.Terminal"
+    launch_command: "open -a Terminal"
+    app_name: "Terminal"
+    description: "Командная строка macOS"
+    common_elements:
+      # Окно терминала
+      terminal_window: "//XCUIElementTypeTextArea"
+      # Меню
+      shell_menu: "//XCUIElementTypeMenuButton[@name='Shell']"
+      edit_menu: "//XCUIElementTypeMenuButton[@name='Edit']"
+    keywords:
+      - "terminal"
+      - "терминал"
+      - "командная строка"
+      - "консоль"
+      - "bash"
+
+  # Дисковая утилита
+  Disk_Utility:
+    bundle_id: "com.apple.DiskUtility"
+    launch_command: "open -a 'Disk Utility'"
+    app_name: "Disk Utility"
+    description: "Управление дисками и разделами"
+    common_elements:
+      # Кнопки
+      first_aid: "//XCUIElementTypeButton[@name='First Aid']"
+      partition: "//XCUIElementTypeButton[@name='Partition']"
+      erase: "//XCUIElementTypeButton[@name='Erase']"
+      restore: "//XCUIElementTypeButton[@name='Restore']"
+      # Сайдбар
+      sidebar_list: "//XCUIElementTypeOutlineRow"
+    keywords:
+      - "disk utility"
+      - "дисковая утилита"
+      - "диски"
+      - "разделы"
+      - "форматирование"
+
+  # Консоль
+  Console:
+    bundle_id: "com.apple.Console"
+    launch_command: "open -a Console"
+    app_name: "Console"
+    description: "Просмотр системных логов"
+    common_elements:
+      # Поиск
+      search_field: "//XCUIElementTypeSearchField"
+      # Кнопки
+      clear_button: "//XCUIElementTypeButton[@name='Clear']"
+      pause_button: "//XCUIElementTypeButton[@name='Pause']"
+    keywords:
+      - "console"
+      - "консоль"
+      - "логи"
+      - "журналы"
+      - "отладка"
+
+  # Шрифты
+  Font_Book:
+    bundle_id: "com.apple.FontBook"
+    launch_command: "open -a 'Font Book'"
+    app_name: "Font Book"
+    description: "Управление шрифтами"
+    common_elements:
+      # Поиск
+      search_field: "//XCUIElementTypeSearchField"
+      # Кнопки
+      install_font: "//XCUIElementTypeButton[@name='Install Font']"
+      validate_font: "//XCUIElementTypeButton[@name='Validate Font']"
+    keywords:
+      - "font book"
+      - "шрифты"
+      - "fonts"
+      - "типографика"
+
+# Spotlight команды
+spotlight_commands:
+  search_and_open:
+    description: "Поиск через Spotlight и открытие первого результата"
+    dsl_template: |
+      # Spotlight поиск: {query}
+      key cmd+space
+      wait 0.5s
+      type "{query}"
+      wait 1s
+      press enter
+      wait 2s
+  
+  search_specific:
+    description: "Поиск конкретного приложения через Spotlight"
+    dsl_template: |
+      # Открытие {app_name} через Spotlight
+      key cmd+space
+      wait 0.5s
+      type "{app_name}"
+      wait 1s
+      press enter
+      wait 2s
+
+# Системные горячие клавиши
+system_shortcuts:
+  screenshot_selection: "cmd+shift+4"
+  screenshot_window: "cmd+shift+4+space"
+  screenshot_full: "cmd+shift+3"
+  force_quit_dialog: "cmd+option+esc"
+  spotlight_search: "cmd+space"
+  mission_control: "ctrl+up"
+  application_windows: "ctrl+down"
+  desktop: "f11"
+  launchpad: "f4"
+  notification_center: "cmd+shift+n"

@@ -7,6 +7,13 @@ import time
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+# Загружаем переменные окружения из .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 try:
     from google import genai
     GEMINI_AVAILABLE = True

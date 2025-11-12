@@ -60,3 +60,12 @@ class ExecutionResult:
     def __post_init__(self):
         if self.logs is None:
             self.logs = []
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Сериализация результата"""
+        return {
+            "success": self.success,
+            "data": self.data,
+            "error": self.error,
+            "logs": self.logs
+        }
