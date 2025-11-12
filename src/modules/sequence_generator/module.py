@@ -24,6 +24,12 @@ from .handlers.system_app_handler import SystemAppHandler
 from .integrations.spotlight_integration import SpotlightIntegration
 from .managers.web_selector_manager import WebSelectorManager
 
+# Компоненты для улучшенного AI и валидации (Часть 2)
+from .prompts.context_aware_prompts import ContextAwarePrompts, PromptContextBuilder
+from .prompts.examples import AIExamples, ExampleSelector
+from .validators.dsl_validator import DSLValidator, DSLFormatter
+from .validators.semantic_validator import SemanticValidator
+
 
 class SequenceGeneratorModule(AIModule):
     """Модуль генерации DSL последовательностей"""
@@ -87,12 +93,46 @@ class SequenceGeneratorModule(AIModule):
             web_stats = self.web_selector_manager.get_site_statistics()
             self.logger.info(f"✅ WebSelectorManager: {web_stats.get('total_sites')} сайтов, {web_stats.get('total_selectors')} селекторов")
             
+            # Инициализация компонентов Части 2: Улучшенный AI и валидация
+            self._initialize_ai_enhancement_components()
+            
         except Exception as e:
             self.logger.error(f"❌ Ошибка инициализации расширенных компонентов: {e}")
             # Fallback к None для graceful degradation
             self.system_app_handler = None
             self.spotlight_integration = None
             self.web_selector_manager = None
+    
+    def _initialize_ai_enhancement_components(self):
+        """Инициализация компонентов для улучшенного AI (Часть 2)"""
+        try:
+            # Инициализация контекстно-зависимых промптов
+            self.context_prompts = ContextAwarePrompts()
+            self.prompt_builder = PromptContextBuilder()
+            self.logger.info(f"✅ ContextAwarePrompts: {len(self.context_prompts.get_available_prompt_types())} типов промптов")
+            
+            # Инициализация примеров для AI
+            self.ai_examples = AIExamples()
+            self.example_selector = ExampleSelector()
+            examples_stats = self.ai_examples.get_statistics()
+            self.logger.info(f"✅ AIExamples: {examples_stats.get('total_examples')} примеров для {len(examples_stats.get('available_intents', []))} типов")
+            
+            # Инициализация валидаторов DSL
+            self.dsl_validator = DSLValidator()
+            self.semantic_validator = SemanticValidator()
+            self.dsl_formatter = DSLFormatter()
+            self.logger.info("✅ DSL валидаторы инициализированы")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Ошибка инициализации AI компонентов: {e}")
+            # Fallback к None для graceful degradation
+            self.context_prompts = None
+            self.prompt_builder = None
+            self.ai_examples = None
+            self.example_selector = None
+            self.dsl_validator = None
+            self.semantic_validator = None
+            self.dsl_formatter = None
     
     def get_context_resources(self) -> Dict[str, Any]:
         """Загружает ресурсы для контекста (интеграция с существующей системой)"""
@@ -152,14 +192,14 @@ class SequenceGeneratorModule(AIModule):
                 if enhanced_dsl:
                     self.logger.info(f"Использована расширенная генерация для {intent['type']}")
             
-            # 3. Если расширенная генерация не сработала, используем AI
+            # 3. Если расширенная генерация не сработала, используем улучшенный AI
             if not enhanced_dsl:
-                # Формирование промпта с контекстом
-                full_prompt = self.build_prompt(user_input, context)
+                # Формирование улучшенного промпта с контекстом (Часть 2)
+                full_prompt = self._build_enhanced_prompt(user_input, intent, context)
                 
                 # AI генерация результата
                 ai_result = self.ai_agent.generate(full_prompt, context)
-                self.logger.info("AI генерация завершена")
+                self.logger.info("Улучшенная AI генерация завершена")
                 
                 # Парсинг AI результата
                 parsed_result = self.parse_ai_result(ai_result)
@@ -181,16 +221,22 @@ class SequenceGeneratorModule(AIModule):
                     "intent": intent
                 }
             
-            # 4. Сохранение макроса
+            # 4. Валидация и улучшение DSL кода (Часть 2)
+            validated_dsl, validation_info = self._validate_and_improve_dsl(dsl_code, context)
+            if validated_dsl != dsl_code:
+                dsl_code = validated_dsl
+                self.logger.info("DSL код улучшен после валидации")
+            
+            # 5. Сохранение макроса
             saved_file = self._save_generated_macro(name, dsl_code, description)
             
-            # 5. Выполнение через executor (опционально)
+            # 6. Выполнение через executor (опционально)
             execution_result = None
             if self.config.executor_config.type != "none":
                 execution_result = self.executor.execute(dsl_code)
                 self.logger.info("Выполнение через executor завершено")
             
-            # 6. Формирование результата
+            # 7. Формирование результата
             execution_time = time.time() - start_time
             
             result_data = {
@@ -746,3 +792,157 @@ class SequenceGeneratorModule(AIModule):
             return self.spotlight_integration.generate_spotlight_search_dsl(query, "open")
         
         return None
+    
+    def _build_enhanced_prompt(self, user_input: str, intent: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """
+        Построение улучшенного промпта с контекстно-зависимыми шаблонами (Часть 2)
+        """
+        try:
+            if not self.context_prompts or not self.prompt_builder:
+                # Fallback к базовому промпту
+                return self.build_prompt(user_input, context)
+            
+            # Определяем тип промпта на основе намерения
+            intent_type = intent.get('type', 'general')
+            prompt_type = self._map_intent_to_prompt_type(intent_type, intent)
+            
+            # Строим контекст для промпта
+            prompt_context = self._build_prompt_context(user_input, intent, context)
+            
+            # Добавляем примеры для Few-Shot Learning
+            if self.example_selector:
+                examples = self.example_selector.select_best_examples(user_input, intent_type, 2)
+                prompt_context['examples'] = examples
+            
+            # Получаем контекстно-зависимый промпт
+            enhanced_prompt = self.context_prompts.get_prompt_for_intent(prompt_type, prompt_context)
+            
+            self.logger.info(f"Построен улучшенный промпт типа: {prompt_type}")
+            return enhanced_prompt
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка построения улучшенного промпта: {e}")
+            return self.build_prompt(user_input, context)
+    
+    def _map_intent_to_prompt_type(self, intent_type: str, intent: Dict[str, Any]) -> str:
+        """Маппинг типа намерения на тип промпта"""
+        mapping = {
+            'web': 'web_automation',
+            'system_app': 'system_automation',
+            'spotlight': 'spotlight_automation',
+            'general': 'mixed_automation'
+        }
+        
+        # Специальные случаи
+        if intent_type == 'system_app' and intent.get('target_app') == 'Calculator':
+            return 'calculator_automation'
+        
+        return mapping.get(intent_type, 'mixed_automation')
+    
+    def _build_prompt_context(self, user_input: str, intent: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Построение контекста для промпта"""
+        try:
+            builder = PromptContextBuilder()
+            builder.add_user_request(user_input)
+            
+            # Добавляем контекст на основе типа намерения
+            intent_type = intent.get('type')
+            
+            if intent_type == 'web' and intent.get('target_site'):
+                site_name = intent['target_site']
+                if self.web_selector_manager:
+                    selectors = self.web_selector_manager.get_site_selectors(site_name)
+                    builder.add_web_context(site_name, selectors)
+            
+            elif intent_type == 'system_app' and intent.get('target_app'):
+                app_name = intent['target_app']
+                if self.system_app_handler:
+                    app_elements = self.system_app_handler.get_app_elements(app_name)
+                    builder.add_system_context(app_name, app_elements)
+                    
+                    # Специальный случай для калькулятора
+                    if app_name == 'Calculator':
+                        # Извлекаем математическое выражение из запроса
+                        import re
+                        math_pattern = r'(\d+[\+\-\*\/\=\d\s\.]+)'
+                        match = re.search(math_pattern, user_input)
+                        if match:
+                            builder.add_math_context(match.group(1).strip())
+            
+            elif intent_type == 'spotlight':
+                if self.spotlight_integration:
+                    searches = list(self.spotlight_integration.common_searches.keys())
+                    builder.add_spotlight_context(searches)
+            
+            # Добавляем все доступные ресурсы
+            resources = self.get_context_resources()
+            builder.add_all_resources(resources)
+            
+            return builder.build()
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка построения контекста промпта: {e}")
+            return {
+                'user_request': user_input,
+                'all_resources': 'Ресурсы недоступны'
+            }
+    
+    def _validate_and_improve_dsl(self, dsl_code: str, context: Dict[str, Any]) -> tuple:
+        """
+        Валидация и улучшение DSL кода (Часть 2)
+        
+        Returns:
+            tuple: (улучшенный_dsl_код, информация_о_валидации)
+        """
+        validation_info = {
+            'syntax_validation': None,
+            'semantic_validation': None,
+            'improvements_applied': [],
+            'warnings': [],
+            'suggestions': []
+        }
+        
+        improved_dsl = dsl_code
+        
+        try:
+            # 1. Синтаксическая валидация и автоисправление
+            if self.dsl_validator:
+                syntax_result = self.dsl_validator.validate_dsl(improved_dsl, auto_fix=True)
+                validation_info['syntax_validation'] = syntax_result
+                
+                if syntax_result.fixed_code:
+                    improved_dsl = syntax_result.fixed_code
+                    validation_info['improvements_applied'].extend(syntax_result.fixes_applied)
+                    self.logger.info(f"Применено {len(syntax_result.fixes_applied)} синтаксических исправлений")
+                
+                validation_info['warnings'].extend(syntax_result.warnings)
+                validation_info['suggestions'].extend(syntax_result.suggestions)
+            
+            # 2. Семантическая валидация
+            if self.semantic_validator:
+                semantic_result = self.semantic_validator.validate_semantics(improved_dsl, context)
+                validation_info['semantic_validation'] = semantic_result
+                
+                validation_info['warnings'].extend(semantic_result.warnings)
+                validation_info['suggestions'].extend(semantic_result.suggestions)
+                
+                if semantic_result.warnings:
+                    self.logger.info(f"Семантическая валидация: {len(semantic_result.warnings)} предупреждений")
+            
+            # 3. Форматирование кода
+            if self.dsl_formatter and improved_dsl != dsl_code:
+                formatted_dsl = self.dsl_formatter.format_dsl(improved_dsl)
+                if formatted_dsl != improved_dsl:
+                    improved_dsl = formatted_dsl
+                    validation_info['improvements_applied'].append("Код отформатирован для лучшей читаемости")
+            
+            # Логируем результаты валидации
+            if validation_info['warnings']:
+                for warning in validation_info['warnings'][:3]:  # Показываем первые 3 предупреждения
+                    self.logger.warning(f"DSL валидация: {warning}")
+            
+            return improved_dsl, validation_info
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка валидации DSL: {e}")
+            return dsl_code, validation_info
